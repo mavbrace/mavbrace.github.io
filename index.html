@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang = "en">
+<link href="https://fonts.googleapis.com/css?family=Share+Tech|VT323" rel="stylesheet">
+
+  <head>
+    <title>Welcome!</title>
+    <link rel="stylesheet" href="resources/css/style.css">
+  </head>
+
+  <body>
+
+    <div class = "upperpage">
+      <button id="resetButton">RESET</button>
+    </div>
+
+    <div class = "page">
+
+        <div class = "shipcolumn">
+          <div id="shipViewDiv" style="display: block;">
+            <img id = "shipImage" src="resources/images/ship.png">
+            <p id="shipInfo"></p>
+            <p id="shipHistory">....LEFT...</p>
+          </div>
+          <div id="tradeDiv" style="display: none;">
+            <p> Technologies for purchase: </p>
+            <button id = "tradeItem0"> item 0 </button>
+            <button id = "tradeItem1"> item 1 </button>
+            <button id = "tradeItem2"> item 2 </button>
+            <p id = "purchaseItemText"> </p>
+            <button id = "purchaseTradeItem"> BUY </button>
+          </div>
+          <div id="sellingDiv" style="display: none;">
+            <p id="sellingText"> Sure, I'll buy your stuff. </p>
+            <button id="acceptSaleButton">ACCEPT</button>
+          </div>
+          <div id = "shipCargoDiv">
+            <div id="cargoBayDiv">
+              <p id="cargoText" style="color:black;">...</p>
+              <p id="shipCraftedCargoText" style="color:black;">...</p>
+            </div>
+            <button id="cargoCombineButton">COMBINE</button>
+            <button id ="swapAroundButton">SWAP AROUND</button>
+            <p id="shipCargoText"> CARGO: ..... </p>
+          </div>
+        </div>
+
+        <div class = "centercolumn">
+          <div class = "mainview">
+            <p id="infoJourney">...</p>
+          </div>
+          <div style="width:100%;height:2px;background-color:gray;"></div>
+          <div class = "mainview">
+            <p style="text-align: center;"> YOUR CREW: </p>
+            <div id = crewViewerDiv style="display:block">
+              <button id="leftSlideshowButton"> < </button>
+              <canvas id = crewMemberCanvas> </canvas>
+              <button id="rightSlideshowButton"> > </button>
+              <p id = "crewMemberDesc"> CREW MEMBER </p>
+              <button id="moreCrewInfoButton">MORE INFO</button>
+            </div>
+          </div>
+          <div id = "controlPanel" class = "controlPanelDiv">
+            <button id="toggleButton">DOCK</button>
+            <button id="goButton">PROGRESS</button>
+            <button id="newDestButton">MAP</button>
+            <p id = "controlPanelNotifs"> >>press progress to begin </p>
+          </div>
+        </div>
+
+        <div class = "logcolumn">
+          <p id = "rightColumnTitle" style="margin:7px;"> LOG </p>
+          <p id="log" style="margin:7px;">...</p>
+          <div id = "strangers" style = "display:none;">
+            <button id = "strangerButton0"> stranger </button>
+            <button id = "strangerButton1"> stranger </button>
+            <button id = "strangerButton2"> stranger </button>
+            <button id = "strangerButton3"> stranger </button>
+            <p id="strangerDescText" style="margin:10px;"> ... </p>
+            <button id="addPersonButton">HIRE STRANGER</button>
+          </div>
+        </div>
+
+    </div>
+
+    <div class = "lowerpage">
+      <h2 id="info3">...</h2>
+    </div>
+
+    <div id = "mainmodal" class="modal">
+      <div id = "modalcontent" class = "modal-content">
+        <span class="close">&times;</span>
+        <div id = "galaxyMapDiv"></div>
+        <button id = "planet0"> </button>
+        <button id = "planet1"> </button>
+        <button id = "planet2"> </button>
+        <button id = "planet3"> </button>
+        <button id = "station0"> </button>
+        <button id = "station1"> </button>
+        <button id = "station2"> </button>
+        <button id = "evil"> </button>
+        <p id = "currLocP"> x </p>
+        <p id="modalText">...</p>
+        <button id="modalGo">SET AS DESTINATION</button>
+      </div>
+    </div>
+
+    <p id="debugText"> ... </p>
+
+    <script type = "text/javascript" src = "resources/javascript/visuals.js"></script>
+    <script type = "text/javascript" src = "resources/javascript/utils.js"></script>
+    <script type = "text/javascript" src = "resources/javascript/params.js"></script>
+    <script type = "text/javascript" src = "resources/javascript/things.js"></script>
+    <script type = "text/javascript" src = "resources/javascript/galaxy.js"></script>
+    <script type = "text/javascript" src = "resources/javascript/ship.js"></script>
+    <script type = "text/javascript" src = "resources/javascript/person.js"></script>
+    <script type = "text/javascript" src = "resources/javascript/tasks.js"></script>
+    <script type = "text/javascript" src = "resources/javascript/game.js"></script>
+    <script type = "text/javascript" src = "resources/javascript/main.js"></script>
+
+  </body>
+
+</html>
