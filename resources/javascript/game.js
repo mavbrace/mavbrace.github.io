@@ -1,7 +1,8 @@
 //-----[ GAME ]------//
 
 class Game {
-  constructor(){
+  constructor(nameOfShip){
+    this.nameOfShip = nameOfShip;
     this.galaxy = null;
     this.ship = null;
     this.view = 0;  // 0 = Main View // 1 = Space Station
@@ -19,6 +20,8 @@ class Game {
     this.possibleCrewMember = null; //A Person, ie a stranger, when docked, you are considering hiring.
     //-- crew slideshow --//
     this.slideshowIndex = -1; //corresponds to index of ship.people: -1 means nobody is shown.
+    //--travelling...//
+    this.isProgressing = false; //for the PROGRESS/GO button
   }
 
   tickToClockTime(tick){
@@ -32,18 +35,17 @@ class Game {
   setup(){
 
     this.galaxy = new Galaxy();
-    this.ship = new Ship("Reliant");
+    this.ship = new Ship(this.nameOfShip);
 
-    // clear some html elements
-    shipStatusText_Element.innerHTML = "[ 100 | 100 | 100 | 100 | 100]"
-    debugText.innerHTML = "";
-    shipCargoSymbols.innerHTML = "";
-    // reset slideshow
-    this.slideshowIndex = -1;
+    this._clearAll();
 
     this._plotPlanets(); //set up planet buttons (which appear in the modal)
     this._plotStations(); //set up station buttons (...)
     this._plotEvil(); //set up evil button (...)
+
+    // set upper title to ship-name.
+    var upperTitle = document.querySelector("#upperTitle");
+    upperTitle.innerHTML = "[ The " + this.ship.shipName + " ]";
 
     for (var i = 0; i < NUMBER_OF_INIT_PEOPLE; i++){
       var tempPerson = this.personGenerator();
@@ -55,6 +57,33 @@ class Game {
 
     this.updateCrewSlideshow();
 
+  }
+
+  //for reset.
+  _clearAll(){
+    // clear some html elements
+    shipStatusText_Element.innerHTML = ""
+    debugText.innerHTML = "";
+    shipCargoSymbols.innerHTML = "";
+    logText_Element.innerHTML = "";
+    shipHistoryText_Element.innerHTML = "";
+    journeyText_Element.innerHTML = "";
+    shipCargoCraftedName.innerHTML = "";
+    shipCargoMessage.innerHTML = "";
+    toggleButton.innerHTML = "DOCK";
+    //hide all these things
+    shipViewVisibilityOn(true);
+    tradeDivVisibilityOn(false);
+    strangersVisibilityOn(false);
+    toggleButton.style.display = "none";
+    newDestButton.style.display = "none";
+    // reset slideshow
+    this.slideshowIndex = -1;
+    // reset message
+    controlPanelNotifs_Element.innerHTML = "";
+    oldControlPanelMessage = "";
+    // change button to initial message
+    goButton.innerHTML = "BOOT-UP SYSTEM"
   }
 
 
@@ -98,19 +127,23 @@ class Game {
     //---------[ UPDATE SHIP'S LOG ]----------//
     //-> CLEAR SHIPLOG FROM BEFORE
     var shipLog = []; //array of length TICK_BUNDLE
-    //-> POPULATE WITH EMPTY STRINGS, READY TO BE FILLED (SOME TICKS REMAIN EMPTY)
-    for (var i = 0; i < TICK_BUNDLE; i++){
-      shipLog.push("");
-    }
-    //->GENERATE THE LOG BY GATHERING, FOR EACH PERSON, THEIR PERSONAL LOGS
-    for (var i = 0; i < this.ship.people.length; i++){
-      var personalLog = this.ship.people[i].log;
-      //TODO: clear each person's old logs so they don't build up forever
-      for (var j = 0; j < personalLog.length; j++){
-        shipLog[personalLog[j][0] - (TICK_BUNDLE * this.iteration)] += personalLog[j][1] + " ";
+    if (this.ship.people.length <= 0){
+      shipLog.push("The ship echoes with emptiness.")
+    } else {
+      //-> POPULATE WITH EMPTY STRINGS, READY TO BE FILLED (SOME TICKS REMAIN EMPTY)
+      for (var i = 0; i < TICK_BUNDLE; i++){
+        shipLog.push("");
       }
+      //->GENERATE THE LOG BY GATHERING, FOR EACH PERSON, THEIR PERSONAL LOGS
+      for (var i = 0; i < this.ship.people.length; i++){
+        var personalLog = this.ship.people[i].log;
+        //TODO: clear each person's old logs so they don't build up forever
+        for (var j = 0; j < personalLog.length; j++){
+          shipLog[personalLog[j][0] - (TICK_BUNDLE * this.iteration)] += personalLog[j][1] + " ";
+        }
+      }
+      //---finished updating ship's log---//
     }
-    //---finished updating ship's log---//
 
     //--[ Add necessary wear-and-tear to ship, etc ]--//
     //----> change how this is done, maybe?
@@ -151,11 +184,11 @@ class Game {
     }
     //----------------------------------------//
 
-    shipStatusText_Element.innerHTML = "ENGINE: " + this.ship.parts["engine"] + "<br>" +
-          "HULL: " + this.ship.parts["hull"] + "<br>" +
-          "SHIELDS: " + this.ship.parts["shields"] + "<br>" +
-          "THRUSTERS: " + this.ship.parts["thrusters"] + "<br>" +
-          "LIFE-SUPPORT: " + this.ship.parts["life-support systems"] + "<br>";
+    shipStatusText_Element.innerHTML = "ENGINE: " + this.ship.parts["engine"] + " | " +
+          "HULL: " + this.ship.parts["hull"] + " | " +
+          "SHIELDS: " + this.ship.parts["shields"] + " | " +
+          "THRUSTERS: " + this.ship.parts["thrusters"] + " | " +
+          "LIFE-SUPPORT: " + this.ship.parts["life-support systems"] + " | ";
 
     //also, print out the Things that are on the ship (for debug)
     if (SHOW_DEBUG_HTML){
@@ -174,19 +207,19 @@ class Game {
     //....update journey info
     journeyText_Element.innerHTML = "FUNDS: " + this.ship.funds + " units<br>";
     journeyText_Element.innerHTML += "DAY: " + this.iteration + "<br>";
-    journeyText_Element.innerHTML += "DESTINATION: ";
+    controlPanelText_Element.innerHTML = "DESTINATION: ";
     if (this.ship.currentJourney != null){
-      journeyText_Element.innerHTML += this.ship.currentJourney.destination.name;
-      journeyText_Element.innerHTML += ", time left: " + this.ship.currentJourney.lengthInDays;
+      controlPanelText_Element.innerHTML += this.ship.currentJourney.destination.name;
+      controlPanelText_Element.innerHTML += ", time left: " + this.ship.currentJourney.lengthInDays;
       updateControlPanelNotifs("destination is " + this.ship.currentJourney.destination.name);
     } else if (this.ship.inFlight == false) {
-      journeyText_Element.innerHTML += "(REACHED) " + this.ship.whichCelestialBody.name;
+      controlPanelText_Element.innerHTML += "(REACHED) " + this.ship.whichCelestialBody.name;
       updateControlPanelNotifs("docked at " + this.ship.whichCelestialBody.name);
     } else {
-      journeyText_Element.innerHTML += "No destination set";
+      controlPanelText_Element.innerHTML += "No destination set";
       updateControlPanelNotifs("drifting in space");
       if (this.ship.whichCelestialBody != null && this.ship.dockingPossible){
-        journeyText_Element.innerHTML += ", can dock at " + this.ship.whichCelestialBody.name + ".";
+        controlPanelText_Element.innerHTML += ", can dock at " + this.ship.whichCelestialBody.name + ".";
       }
     }
   }
@@ -245,6 +278,10 @@ class Game {
 
     warningsText_Element.innerHTML = ""; //NOTE: get rid of this later.
     logText_Element.innerHTML = "You look around the station, spotting a few strangers who look open to conversation.<br>";
+    if (this.ship.people <= 0){
+      logText_Element.innerHTML += "Besides the fact that you need a crew, you've been feeling rather lonely lately.";
+      logText_Element.innerHTML += " Probably should start trying to hire some people."
+    }
 
     var tempPeople = [];
     for (var i = 0; i < NUM_PEOPLE_IN_STATION; i++){
@@ -270,6 +307,9 @@ class Game {
 
 
   addNewPersonToShip(newPerson){
+    if (this.slideshowIndex == -1){
+      this.slideshowIndex = 0; //begin to display slideshow.
+    }
     this.ship.people.push(newPerson);
   }
 
@@ -387,9 +427,11 @@ class Game {
   //--> crew member 'slideshow' (not really a slideshow, but...)
   updateCrewSlideshow(updateCanvas = true){
     if (this.slideshowIndex <= -1){
-      //empty out html -> TODO: do this fully, once everything's in place.
+      //empty out html, including clearing the canvas to white.
       crewMemberDesc.innerHTML = "";
+      crewContext.clearRect(0, 0, crewCanvas.width, crewCanvas.height);
     } else {
+      console.log("......");
       if (this.ship.people.length > this.slideshowIndex){
         //--update slideshow--//
         var crewmember = this.ship.people[this.slideshowIndex];
@@ -410,7 +452,6 @@ class Game {
   }
 
   updatePersonCanvas(whichPerson){
-    //random for now... ohhh boy...
     //note: can't getImageData on a local file, so not doing that (maybe later)
     //ORDER: "skin","hairColour","upperFace","lowerFace",...
     //..."faceOutline","hairOutline","clothingColour","clothingOutline"
@@ -444,10 +485,16 @@ class Game {
   displayMorePersonInfo(){
     //TODO: checks
     //TODO: finish this up
+
     var crewmember = this.ship.people[this.slideshowIndex];
     var desc = "--| " + crewmember.name + " |--<br>";
     desc += crewmember.getFullDesc();
-    crewMemberDesc.innerHTML = desc;
+    document.getElementById("energyLevel_element").innerHTML = "" + crewmember.energy_level;
+    document.getElementById("healthLevel_element").innerHTML = "" + crewmember.health;
+    //set mood icon (0->5)
+    document.getElementById("moodIcon").src = "resources/images/mood" + crewmember.moodIndex + "_icon.png";
+
+    document.getElementById("crewMemberDesc2").innerHTML = desc;
   }
 
   //==========================================//

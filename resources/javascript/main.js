@@ -3,27 +3,74 @@ var MAIN_VIEW = 0;
 var SPACE_STATION_VIEW = 1;
 
 //1. start a new game
-var game = new Game();
+var begin = new Begin();
+var game = null;
+
+//---SKIP_INTRO is for testing----//
+if (SKIP_INTRO == true){
+  //force beginning to end.
+  begin.finishUp();
+  begin = null;
+  game = new Game("Noname");
+  game.setup();
+}
+//--------------------------------//
+
+beginButton.onclick = function(){
+  var isDone = begin.done();
+  if (isDone){
+    //====| BEGIN GAME |====//
+    game = new Game(begin.ship_name);
+    begin = null; //disconnect the object
+    game.setup();
+    //======================//
+  }
+}
+
+resetButton.onclick = function(){
+  game = null;
+  begin = new Begin();
+  //game.iteration = 0;
+  //game.setup();
+  //game.go();
+}
+
 
 
 //----------[ BUTTONS! ]-----------//
 goButton.onclick = function(){
   if (game.view == MAIN_VIEW){
+
+    goButton.innerHTML = "PROGRESS";
+
     updateControlPanelNotifs("");
     if (game.iteration == 0){
       game.setup();
+      goButton.innerHTML = "PROGRESS";
+      toggleButton.style.display = "inline";
+      newDestButton.style.display = "inline";
+      //--> go...
+      game.go();
+    } else {
+    //--testing:animation---//
+    var anim = document.getElementById("shipAnimDiv");
+    anim.style.animation = "slide 2s linear infinite";
+    window.setTimeout(andProgress,1000);
+    //----------------------//
     }
-    game.go();
+
+
   } else {
     updateControlPanelNotifs("");
     game.spaceStationGo();
   }
 }
 
-
-resetButton.onclick = function(){
-  game.iteration = 0;
-  game.setup();
+function andProgress(){
+  //--testing:animation---//
+  var anim = document.getElementById("shipAnimDiv");
+  anim.style.animation = "slide 60s linear infinite";
+  //----------------------//
   game.go();
 }
 
@@ -69,9 +116,9 @@ toggleButton.onclick = function(){
       purchaseItemText.innerHTML = "...";
       updateBuyerText();
       //------------//
-      toggleShipViewVisibility();
-      toggleTradeDivVisibility();
-      toggleStrangersVisibility();
+      shipViewVisibilityOn(false);
+      tradeDivVisibilityOn(true);
+      strangersVisibilityOn(true);
       //immediate results:
       game.updateJourneyInfoHTML();
       game.spaceStationGo();
@@ -88,9 +135,9 @@ toggleButton.onclick = function(){
     strangerDesc_Element.innerHTML = "";
     rightColumnTitle_Element.innerHTML = "LOG";
     //------------//
-    toggleShipViewVisibility();
-    toggleTradeDivVisibility();
-    toggleStrangersVisibility();
+    shipViewVisibilityOn(true);
+    tradeDivVisibilityOn(false);
+    strangersVisibilityOn(false);
     //immediate results:
     game.go();
   }
@@ -369,6 +416,9 @@ function handleStrangerClicks(index){
 //---SLIDESHOW BUTTONS (CREWMEMBERS)
 leftSlideshowButton.onclick = function(){
   if (game.ship != null){
+    if (game.ship.people.length <= 0){
+      return;
+    }
     game.slideshowIndex -= 1;
     game.slideshowIndex = game.slideshowIndex.mod(game.ship.people.length);
     if (moreCrewInfoBtn.innerHTML == "MORE INFO"){
@@ -385,6 +435,9 @@ leftSlideshowButton.onclick = function(){
 }
 rightSlideshowButton.onclick = function(){
   if (game.ship != null){
+    if (game.ship.people.length <= 0){
+      return;
+    }
     game.slideshowIndex += 1;
     game.slideshowIndex = game.slideshowIndex.mod(game.ship.people.length);
     if (moreCrewInfoBtn.innerHTML == "MORE INFO"){
@@ -402,20 +455,27 @@ rightSlideshowButton.onclick = function(){
 
 moreCrewInfoBtn.onclick = function(){
   if (game.ship != null){
+    if (game.ship.people.length <= 0){
+      return;
+    }
     if (moreCrewInfoBtn.innerHTML == "MORE INFO"){
       //FLIP TO 'side 2'
       //1. change button
       moreCrewInfoBtn.innerHTML = "BACK";
-      //2. remove
-      crewCanvas.style.display = "none";
+      //2. hide + display
+      document.getElementById("frontside").style.display = "none";
+      document.getElementById("flipside").style.display = "block";
+      //crewCanvas.style.display = "none";
       //3. add
       game.displayMorePersonInfo();
     } else {
       //FLIP TO 'front side'
       //1. change button
       moreCrewInfoBtn.innerHTML = "MORE INFO";
-      //2. add
-      crewCanvas.style.display = "block";
+      //2. hide + display
+      document.getElementById("flipside").style.display = "none";
+      document.getElementById("frontside").style.display = "block";
+      //crewCanvas.style.display = "block";
       //3. re-write
       game.updateCrewSlideshow(false);
     }

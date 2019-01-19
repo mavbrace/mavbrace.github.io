@@ -48,6 +48,12 @@ class Ship {
     this.cargoOffer = []; // [whatCargo, offer] -1 means an offer on the crafted cargo
   }
 
+  adjustWholeCrewMood(amount){
+    for (var p = 0; p < this.people.length; p++){
+      this.people[p].adjustMood(amount);
+    }
+  }
+
   clearCraftedCargoInfo(){
     this.craftedCargoName = "";
     this.craftedCargoWorth = 0;
@@ -113,8 +119,8 @@ class Ship {
   }
 
   _deactivateWarnings(warningKeysList){
-    if (warningKeysList.length < 1){
-      console.log("Error: no warnings in list");
+    if (warningKeysList.length <= 0){
+      //all warnings have been activated; normal, but not usual.
       return;
     }
     for (var i = 0; i < warningKeysList.length; i++){
@@ -137,6 +143,49 @@ class Ship {
     }
     return warningsAsString;
   }
+
+  //returns 0.0 -> 1.0 (percentage repaired)
+  getOverallRepairLevel(){
+    var repairLevel = 0;
+    var fullyRepaired = 500;
+    repairLevel = this.parts["engine"] +
+                  this.parts["hull"] +
+                  this.parts["shields"] +
+                  this.parts["thrusters"] +
+                  this.parts["life-support systems"];
+    return repairLevel / fullyRepaired;
+  }
+
+  getPartInWorstCondition(){
+    //put in most likely order.
+    var worstCondition = 100;
+    var worstPart = "shields";
+    var allParts = ["shields","hull","thrusters","engine","life-support systems"];
+    for (var i = 0; i < allParts.length; i++){
+      if (this.parts[allParts[i]] < worstCondition){
+        worstPart = allParts[i];
+        worstCondition = this.parts[allParts[i]]
+      }
+    }
+    return worstPart;
+  }
+
+
+  getRandomSickPerson(){
+    var sickPeople = [];
+    for (var i = 0; i < this.people.length; i++){
+      if (this.people[i].hasPoorHealth()){
+        sickPeople.push(this.people[i]);
+      }
+    }
+    if (sickPeople.length <= 0){
+      return null;
+    } else {
+      var r = random(sickPeople.length);
+      return sickPeople[r];
+    }
+  }
+
 
   //called every bundle of ticks
   //---> input the 'iteration' ie the current bundle of ticks ie the 'day'
@@ -199,10 +248,18 @@ class Ship {
 
     //--------//
     //--add some debris... I guess
-    this.addAThing("garbage","a bit of debris");
+    if (random(2) == 0){
+      this.addAThing("garbage","a bit of debris");
+    }
     //-----------//
 
     //--[make sure all the parts are above 0]--//
+    this._ensurePartsAboveZero();
+    //----------------------------------------//
+
+  }
+
+  _ensurePartsAboveZero(){
     if (this.parts["engine"] < 0){
       this.parts["engine"] = 0;
     }
@@ -218,8 +275,6 @@ class Ship {
     if (this.parts["life-support systems"] < 0){
       this.parts["life-support systems"] = 0;
     }
-    //----------------------------------------//
-
   }
 
   //called each relevant tick (ie multiple times in a row)
@@ -251,44 +306,182 @@ class Ship {
   respondToSpaceDebris(whatIteration){
     //TODO: better navigators = fewer hitting of asteroids
     var partReport = "";
-    if (this.parts["shields"] <= 0){
-      this.parts["hull"] -= 20;
-      partReport = "hull is now at " + this.parts["hull"] + "%.";
+
+    var dmg = random(35) + 5; // 5 -> 40
+    this.damageShipExternal(dmg);
+
+    if (dmg < 10){
+      partReport = "minimal damage.";
+    } else if (dmg >= 10 && dmg < 30){
+      partReport = "some damage.";
     } else {
-      this.parts["shields"] -= 20;
-      partReport = "shields are now at " + this.parts["shields"] + "%.";
+      partReport = "significant damage.";
     }
 
-    this.shipHistory.push("< Report [day : " + whatIteration + "] >");
+    //---injury caused?---//
+    var injuryDesc = "";
+    if (this.people.length > 0){
+      if (random(CHANCE_FOR_INJURY_BY_SPACE_DEBRIS) == 0){
+        var injury = random(30) + dmg; //absolute max is ~70
+        //choose a random person to 'cause injury' to.
+        var p = this.people[random(this.people.length)];
+        injuryDesc = p.causeRandomInjury(injury);
+      }
+    }
+
+
+    this.shipHistory.push("===| REPORT, DAY " + whatIteration + " |===");
     this.shipHistory.push("The ship has hit a bit of space debris.");
-    this.shipHistory.push("The ship sustained some damage: " + partReport);
+    this.shipHistory.push("The ship sustained " + partReport + "<br>");
+    if (injuryDesc != ""){
+      this.shipHistory.push(injuryDesc + "<br>");
+    }
   }
 
+
+  //=====~~~=====//
   respondToEnemyShip(whatIteration){
     //TODO: weapons specialist = better chance with enemies
     //TODO: linguist = better chance with alien enemies / talking people down
     //TODO: navigators = better chance at escaping
-
-    var report = "";
-    var record = ""; //to be used in conversation
-    var enemyShipName = "that one pirate ship"; //TODO: generate this
-    var r = random(3);
-    if (r == 0){
-      report = "Managed to outrun our hostile pursuer.";
-      record = "were pursued by " + enemyShipName;
-    } else if (r == 1){
-      report = "Enemy ship has been eliminated.";
-      record = "defeated " + enemyShipName;
-    } else {
-      report = "An agreement was reached. Parted ways with no further conflict.";
-      record = "outsmarted " + enemyShipName;
+    //-- occurs once per day, as long as the attack lasts --//
+    var record = ""; //to be used in conversation (not using atm)
+    var names1 = ["Swift","Dangerous","Angry","Jumpy"];
+    var names2 = ["Wasp","Walrus","Apple","Spoons"];
+    var enemyShipName = names1[random(names1.length)] + " " + names2[random(names2.length)];
+    //1. damage?
+    var dmg = 0;
+    if (random(2) == 0){
+      dmg = random(100);
+      this.damageShipExternal(dmg);
     }
 
-    this.battleHistory.push(record);
+    //--generate a battle account-//
+    var points = 0;
+    var report = "> The " + this.shipName + " was pursued by an enemy ship.";
+    var MAX_POINTS = 6;
+    for (var i = 0; i < 3; i++){
+      report += "<br>";
+      var r = random(3);
+      if (r == 0){
+        report += ">> Tried to outrun the pursuer";
+        var success = random(3);
+        points += success; // 0, 1, or 2 points
+        if (success == 0){
+          report += ", but we couldn't quite manage it.";
+        } else {
+          report += "; we sped away from them.";
+        }
 
-    this.shipHistory.push("< Report [day : " + whatIteration + "] >");
-    this.shipHistory.push("The " + this.shipName + " was pursued by an enemy ship.");
-    this.shipHistory.push(report);
+      } else if (r == 1){
+        report += ">> Fired cannons.";
+        var success = random(3);
+        points += success;
+        if (success == 0){
+          report += " Missed.";
+        } else {
+          report += " Got a hit!";
+        }
+
+      } else {
+        report += ">> Attempted to contact the unknown pursuers.";
+        var success = random(3);
+        points += success;
+        if (success == 0){
+          report += " The ship ignored our attempts.";
+        } else {
+          report += " The ship identified themselves as the " + enemyShipName + ".";
+        }
+      }
+    }
+    report += "<br>";
+
+    //==GENERATE CONCLUSION==//
+    var isBadScore = true;
+    if (points <= 0){
+      //WORST SCORE.
+      isBadScore = true;
+      report += "You really flubbed that, captain";
+    } else if (points > 0 && points <= 3){
+      //MEDIOCRE
+      isBadScore = true;
+      report += "The incident ended poorly";
+    } else if (points > 3 && points < 6){
+      //PRETTY GOOD
+      isBadScore = false;
+      report += "Thanks to some deft maneuvering, things ended well";
+    } else {
+      //PERFECT SCORE.
+      isBadScore = false;
+      report += "Brilliant job";
+    }
+
+    //==== DAMAGE ====//
+    if (dmg <= 0){
+      if (isBadScore){
+        report += ", but (somehow)";
+      } else {
+        report += ":";
+      }
+      report += " the ship sustained no damage.";
+    } else if (dmg > 0 && dmg <= 50){
+      report += "."
+      report += " The ship sustained some damage.";
+    } else if (dmg > 50){
+      if (isBadScore){
+        report += "; not surprisingly,"
+      } else {
+        report += "; unfortunately"
+      }
+      report += " the ship sustained major damage.";
+    }
+    //================//
+    //---injury caused?---//
+    var injuryDesc = "";
+    if (this.people.length > 0){
+      if (random(CHANCE_FOR_INJURY_BY_ENEMY_SHIP) == 0 && dmg > 0){
+        var injury = random(40) + (dmg/50)|0; //absolute max is ~90
+        //choose a random person to 'cause injury' to.
+        var p = this.people[random(this.people.length)];
+        injuryDesc = p.causeRandomInjury(injury);
+      }
+    }
+    //================//
+    this.battleHistory.push(""); //not using atm
+
+    this.shipHistory.push("===| REPORT, DAY " + whatIteration + " |===");
+    this.shipHistory.push(report + "<br>");
+    if (injuryDesc != ""){
+      this.shipHistory.push(injuryDesc + "<br>");
+    }
   }
+  //=======~~~~~=======//
+
+
+  //---[damage from the outside]---//
+  //--> input 'damage', integer from 0+
+  damageShipExternal(damageAmount){
+    var remaining_damage = damageAmount;
+    //-> ORDER is important here. Keys must relate to this.parts, but are in a dif order.
+    var keys = ["shields","hull","thrusters","engine","life-support systems"];
+    var k = 0;
+    while (remaining_damage > 0 && k < keys.length){
+      if (!this.parts[keys[k]] in this.parts){
+        console.log("Something went wrong when damaging the ship.");
+        return;
+      }
+      if (this.parts[keys[k]] > 0){
+        var dmg = remaining_damage;
+        remaining_damage = remaining_damage - this.parts[keys[k]];
+        console.log("remaining_damage: " + remaining_damage);
+        this.parts[keys[k]] -= dmg;
+      }
+      k++;
+    }
+    //---[ set all parts that are negative to 0 ]---//
+    this._ensurePartsAboveZero();
+
+  }
+
 
 }

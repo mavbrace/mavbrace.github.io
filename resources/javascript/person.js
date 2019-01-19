@@ -7,6 +7,9 @@ var NOT_MOTIVATED = 0;
 var MOTIVATED = 1;
 var EXTREMELY_MOTIVATED = 2;
 
+var NO_INJURIES = 0;
+var MINOR_INJURIES = 1;
+var MAJOR_INJURIES = 2; // placed in sick bay.
 
 
 //-- PERSON --//
@@ -29,6 +32,10 @@ class Person{
     this.energy_level = 50; // 0 -> 100
     this.moodIndex = 2; //pertains to MOODS
     //this.competance = 0;
+    this.health = 100; // if 0, dead.
+    this.healthIssues = { "isSick": false,
+                          "injuryLevel": NO_INJURIES,
+                          "injuryDesc": ""    };
     //------------------------------//
     this.title = title;
     this.specialty = specialty; // only need to fill in if person is a specialist ("" if none)
@@ -38,7 +45,7 @@ class Person{
     this.task = null; //One main task
     this.possibleTasks = []; //A list of tasks for the person to choose from, when they choose a new task
     this.waitingFor = []; // List of tasks in queue
-    //-> probabilites for each and every task:  //FOR NOW: all probabilites added == 1 (ie equal probability)
+    //-> probabilites for each and every task:
     this.task_chances = { "DoNothing":1,
                           "Sleeping":1,
                           "Exercise":1,
@@ -50,7 +57,8 @@ class Person{
                           "Painting":1,
                           "Wander":1,
                           "Cooking":1,
-                          "EnemyShip":100 };
+                          "EnemyShip":100,
+                          "PoorHealth": 1    };
     //-> visuals
     this.visualFeatures = {"hairColour":null,
                           "skin":null,
@@ -73,7 +81,8 @@ class Person{
     //MASC, FEM, and EITHER
     var features = ['Fem','Masc','Either'];
     //note: the features translate to: masc+either, fem+either, or just either
-    var group = 'A';
+    var groups = ['A','B','C'];
+    var group = groups[this.originPlanet.indexID % 3];
     var feature = features[this.gender];
     this.hairLength = random(3);
     //----------------------//
@@ -86,23 +95,97 @@ class Person{
       if (group == 'A' && (keyParts[i] in groupA_images)){
           var r = random(groupA_images[keyParts[i]].length);
           this.visualFeatures[keyParts[i]] = groupA_images[keyParts[i]][r];
-      //----//
+      } else if (group == 'B' && keyParts[i] in groupB_images){
+        var r = random(groupB_images[keyParts[i]].length);
+        this.visualFeatures[keyParts[i]] = groupB_images[keyParts[i]][r];
+      } else if (group == 'C' && keyParts[i] in groupC_images){
+        var r = random(groupC_images[keyParts[i]].length);
+        this.visualFeatures[keyParts[i]] = groupC_images[keyParts[i]][r];
+      //=====//
       } else if (feature == 'Masc' && (keyParts[i] in masc_images)){
-          var r = random(masc_images[keyParts[i]].length);
-          this.visualFeatures[keyParts[i]] = masc_images[keyParts[i]][r];
+          //-> chance for it to be an either image, as well.
+          if (random(3) == 0 && keyParts[i] in either_images){
+            var r = random(either_images[keyParts[i]].length);
+            this.visualFeatures[keyParts[i]] = either_images[keyParts[i]][r];
+          } else {
+            var r = random(masc_images[keyParts[i]].length);
+            this.visualFeatures[keyParts[i]] = masc_images[keyParts[i]][r];
+          }
+      //----//
       } else if (feature == 'Fem' && (keyParts[i] in fem_images)){
-          var r = random(fem_images[keyParts[i]].length);
-          this.visualFeatures[keyParts[i]] = fem_images[keyParts[i]][r];
+          //-> chance for it to be an either image, as well
+          if (random(3) == 0 && keyParts[i] in either_images){
+            var r = random(either_images[keyParts[i]].length);
+            this.visualFeatures[keyParts[i]] = either_images[keyParts[i]][r];
+          } else {
+            var r = random(fem_images[keyParts[i]].length);
+            this.visualFeatures[keyParts[i]] = fem_images[keyParts[i]][r];
+          }
+      //----//
       } else if (keyParts[i] in either_images){
           var r = random(either_images[keyParts[i]].length);
           this.visualFeatures[keyParts[i]] = either_images[keyParts[i]][r];
+      //----//
       } else {
         console.log("Error adding visual feature.");
       }
     }
   }
 
+
   //---[ GETS ]---//
+  hasPoorHealth(){
+    //in general!
+    if (this.hasMajorInjury() != ""){
+      return true;
+    }
+    if (this.hasMinorInjury() != ""){
+      return true;
+    }
+    if (this.isSick()){
+      return true;
+    }
+    return false;
+  }
+
+  hasMajorInjury(){
+    if (this.healthIssues["injuryLevel"] == MAJOR_INJURIES){
+      return this.healthIssues["injuryDesc"];
+    } else {
+      return "";
+    }
+  }
+  hasMinorInjury(){
+    if (this.healthIssues["injuryLevel"] == MINOR_INJURIES){
+      return this.healthIssues["injuryDesc"];
+    } else {
+      return "";
+    }
+  }
+  isSick(){
+    if (this.healthIssues["isSick"]){
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+
+  //--- RETURNS NAME -OR- IF IT'S THE SAME PERSON, RETURN "him/her/theirself".
+  getName(testPerson){
+    if (testPerson === this){
+      if (this.gender == FEMALE){
+        return "herself";
+      } else if (this.gender == MALE){
+        return "himself";
+      } else {
+        return "theirself";
+      }
+    } else {
+      return testPerson.name;
+    }
+  }
+
 
   // get all passions THAT THE PERSON HAS (ie == true) as a list
   getPassionsAsArray(){
@@ -147,8 +230,7 @@ class Person{
     *  - Name has a passion for Passion.
     *  - Fitness level: Motivation level: Energy level: Mood:
     */
-    var desc = this.title + " " + this.name + ", from " + this.originPlanet.name;
-    desc += "<br>-" + this.specialty;
+    var desc = "";
 
     var passionsArray = this.getPassionsAsArray();
     if (passionsArray.length > 0){
@@ -164,13 +246,23 @@ class Person{
 
     desc += "<br>-fitness level: " + this.fitness;
     desc += "<br>-motivation level: " + this.motivation_level;
-    desc += "<br>-energy level: " + this.energy_level;
-    desc += "<br>-mood: " + MOODS[this.moodIndex];
 
     return desc;
   }
-
   //================//
+
+
+  //this.health: 0 -> 100, where 0 = dead.
+  adjustHealth(adjustment){
+    this.health = this.health + adjustment;
+    if (this.health > 100){
+      this.health = 100;
+    }
+    if (this.health < 0){
+      this.health = 0; //TODO: make dead.
+    }
+  }
+
 
   // 'adjustment' should be +1 or -1... but it's also okay if it's 0
   adjustMood(adjustment){
@@ -183,6 +275,115 @@ class Person{
       this.moodIndex = 0;
     }
   }
+
+
+  //input: 'amount' should be from 1 -> ~90
+  causeRandomInjury(amount){
+    this.health -= amount;
+    if (this.health < 0){
+      this.health = 0; //TODO: they're dead x_x
+    }
+    var desc = "";
+    if (amount <= 20){
+      return this.name + " fell, luckily suffering only a few bruises.";
+    } else if (amount > 20 && amount <= 50){
+      this.updateHealthIssues_Injury(MINOR_INJURIES, "broken wrist");
+      return this.name + " reported a broken wrist.";
+    } else {
+      this.updateHealthIssues_Injury(MAJOR_INJURIES, "fractured skull");
+      return this.name + " was brought to the sick bay with major injuries.";
+    }
+  }
+
+
+  //causes can be: "fire", "explosion", "fall", "projectile", "animal"
+  causeSpecificInjury(amount, cause){
+    this.health -= amount;
+    if (this.health < 0){
+      this.health = 0; //TODO: they're dead x_x
+    }
+    var desc = "";
+    //========================//
+    if (amount <= 20){
+      if (cause == "explosion" || cause == "fall") {
+        return "few bruises";
+      } else {
+        return "few scratches";
+      }
+    }
+    //========================//
+    if (amount > 20 && amount <= 50){
+      var possibleInjuries = [];
+      if (cause == "fire"){
+        possibleInjuries.push("minor burn");
+      } else if (cause == "explosion"){
+        possibleInjuries.push("broken wrist", "sprained ankle", "minor burn",
+                              "fractured rib", "minor chemical burn", "collection of deep cuts");
+      } else if (cause == "fall"){
+        possibleInjuries.push("broken wrist", "sprained ankle", "broken arm",
+                              "fractured rib", "sprained wrist", "concussion");
+      } else if (cause == "projectile"){
+        possibleInjuries.push("deep cut","wounded arm","wounded hand","lost finger");
+      } else if (cause == "animal"){
+        possibleInjuries.push("collection of scrapes","collection of deep cuts","collection of bruises");
+      } else {
+        //something else...
+        possibleInjuries.push("broken wrist", "sprained ankle", "broken arm",
+                              "fractured rib", "sprained wrist", "concussion");
+      }
+
+      var inj = possibleInjuries[random(possibleInjuries.length)];
+      this.updateHealthIssues_Injury(MINOR_INJURIES, inj);
+      return inj;
+    }
+    //========================//
+    if (amount > 50){
+      var possibleInjuries = [];
+      if (cause == "fire"){
+        possibleInjuries.push("bad burn");
+      } else if (cause == "explosion"){
+        possibleInjuries.push("fractured skull","concussion","broken leg","3rd-degree burn",
+                              "collection of life-threatening injuries");
+      } else if (cause == "fall"){
+        possibleInjuries.push("fractured skull","concussion","broken leg", "collection of life-threatening injuries");
+      } else if (cause == "projectile"){
+        possibleInjuries.push("pierced lung","projectile lodged in the skull","punctured stomach",
+                              "collection of life-threatening injuries");
+      } else if (cause == "animal"){
+        possibleInjuries.push("torn throat","collection of life-threatening injuries");
+      } else {
+        //something else...
+        possibleInjuries.push("broken wrist", "sprained ankle", "broken arm",
+                              "fractured rib", "sprained wrist", "concussion");
+      }
+
+      var inj = possibleInjuries[random(possibleInjuries.length)];
+      this.updateHealthIssues_Injury(MAJOR_INJURIES, inj);
+      return inj;
+    }
+
+    //shouldn't reach here...
+    console.log("Error: something went wrong when giving injuries.");
+    return "...";
+
+  }
+
+  //=====~~~~=====//
+  updateHealthIssues_Injury(level, desc){
+    this.healthIssues["injuryLevel"] = level;
+    this.healthIssues["injuryDesc"] = desc;
+    if (level == MINOR_INJURIES){
+      this.adjustMood(-1); //also, decrease mood by 1.
+      this.task_chances["PoorHealth"] += 10;
+    } else if (level == MAJOR_INJURIES){
+      this.adjustMood(-2); //also, decrease mood by 1.
+      this.task_chances["PoorHealth"] = 100;
+    } else if (level = NO_INJURIES){
+      this.adjustMood(1); //happier!
+      this.task_chances["PoorHealth"] = 1;
+    }
+  }
+  //=====~~~~=====//
 
   //========[ TASKS ]========// //---> Runs every tick
   //=======//
@@ -237,6 +438,7 @@ class Person{
     // 9 = WanderTask
     // 10 = CookingTask
     // 11 = EnemyShipTask
+    // 12 = PoorHealthTask
     //==================================//
     this.possibleTasks = []; //list of task 'IDs'; empty and refill here...
     //-> probability list that will be generated (and picked from):
@@ -270,6 +472,8 @@ class Person{
     //6. EngineerTask: ...
     if (this.title == "Engineer"){
       this.possibleTasks.push(6);
+      var repairPercent = this.ship.getOverallRepairLevel();
+      this.task_chances["Engineer"] = (1/repairPercent)|0;
       probabilities.push(this.task_chances["Engineer"]);
     }
     //7. SpecialistTask: ...
@@ -295,9 +499,14 @@ class Person{
       this.possibleTasks.push(11);
       probabilities.push(this.task_chances["EnemyShip"]);
     }
+    //12. PoorHealthTask
+    if (this.health < 50 || this.hasPoorHealth()){
+      this.possibleTasks.push(12);
+      probabilities.push(this.task_chances["PoorHealth"]);
+    }
 
     //------------------//
-    // PICK A TASK // -->Random task (for now)
+    // PICK A TASK //
     //var chosenTaskID = this.possibleTasks[Math.floor(Math.random() * this.possibleTasks.length)];
     var chosenTaskID = this.possibleTasks[lottery(probabilities)];
     var newTask = null;
@@ -352,6 +561,8 @@ class Person{
       newTask = new CookingTask(this);
     } else if (chosenTaskID == 11){
       newTask = new EnemyShipTask(this);
+    } else if (chosenTaskID == 12){
+      newTask = new PoorHealthTask(this);
     } else {
       //TODO.....handle this?
       console.log("Error: no tasks chosen.");

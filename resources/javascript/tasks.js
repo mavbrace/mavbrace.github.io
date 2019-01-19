@@ -187,7 +187,8 @@ class EngineerTask extends Task{
     this.taskName = "Engineering";
     this.howLong = 5;
     this.initialDescription = "";
-    this.partToFix = randomKey(this.person.ship.parts);
+    this.partToFix = this.person.ship.getPartInWorstCondition();
+    this.finalDesc = "";
   }
 
   run(){
@@ -197,17 +198,35 @@ class EngineerTask extends Task{
   }
 
   taskDone() {
+    //chance to be injured whilst repairing something.
+    if (chance(1,5)){
+      var injury = random(55) + 1;
+      var cause = "";
+      var causeDesc = "";
+      if (random(2) == 0){
+        cause = "explosion";
+        causeDesc = "something caused a small explosion."
+      } else {
+        cause = "fall";
+        causeDesc = this.person.getPronoun(false) + " had a nasty fall."
+      }
+      var injuryDesc = this.person.causeSpecificInjury(injury, cause);
+      this.finalDesc = " has suffered a " + injuryDesc;
+      this.finalDesc += " while trying to repair the " + this.partToFix + " -- " + causeDesc;
+    } else {
+      this.finalDesc = " has completed a minor repair on the " + this.partToFix + ".";
+    }
     //-> Done
     return super.taskDone();
   }
 
   describeFinal(){
-    return " has completed a minor repair on the " + this.partToFix + ".";
+    return this.finalDesc;
   }
 }
 
 //-------------------------------------------//
-//AVAILABLE_SPECIALTIES = ["Weapons Specialist","Linguist","Botanist","Storyteller","Medic"];
+//->AVAILABLE_SPECIALTIES = ["Weapons Specialist","Linguist","Botanist","Storyteller","Medic"];
 class SpecialistTask extends Task{
   constructor(person) {
     super(person);
@@ -258,7 +277,8 @@ class SpecialistTask extends Task{
     } else if (this.person.specialty == "Medic"){
       this.finalDescription = this._medicActivity();
     } else {
-      this.finalDescription = " was acting confused.";
+      //shouldn't reach here.
+      this.finalDescription = " was confused. Huh?";
     }
     //---> Done
     return super.taskDone();
@@ -282,22 +302,31 @@ class SpecialistTask extends Task{
   }
   //"Storyteller"
   _storytellerActivity(){
-    //-> (TODO) INCREASE OR DECREASE crews' stats.
+    //-> chance to make everyone's mood better, or worse.
     var r = random(2);
     var result = "";
     var desc = "";
     if (r == 0){
       desc = "story with a happy ending";
-      result = "Everyone became a little happier.";
+      result = "[The crew became a little happier]";
+      this.person.ship.adjustWholeCrewMood(1);
     } else {
       desc = "tragic tale";
-      result = "There wasn't a dry eye in sight."
+      result = "[The crew felt a little glum]"
+      this.person.ship.adjustWholeCrewMood(-1);
     }
     return " told everyone a " + desc + ". " + result;
   }
   //Medic
   _medicActivity(){
-    return " cleaned " + this.person.getPronoun(true) + " medical instruments.";
+    var sickPerson = this.person.ship.getRandomSickPerson();
+    if (sickPerson == null){
+      return " cleaned " + this.person.getPronoun(true) + " medical instruments.";
+    } else {
+      sickPerson.adjustHealth(20);
+      return " treated " + this.person.getName(sickPerson) + ".";
+    }
+
   }
 
 
@@ -369,9 +398,26 @@ class CookingTask extends Task{
     var galleyOrLounge = ["galley","lounge"];
     var r = random(galleyOrLounge.length);
     if (type == "treat"){
-      this.person.ship.addAThing("food","cake baked by " + this.person.name, observation, galleyOrLounge[r]);
+      var r = random(2);
+      var what = "";
+      if (r == 0){
+        what = "cake baked by " + this.person.name;
+      } else {
+        what = "pie baked by " + this.person.name;
+      }
+      this.person.ship.addAThing("food", what, observation, galleyOrLounge[r]);
+
     } else {
-      this.person.ship.addAThing("food","stew cooked by " + this.person.name, observation, galleyOrLounge[r]);
+      var r = random(3);
+      var what = "";
+      if (r == 0){
+        what = "stew cooked by " + this.person.name;
+      } else if (r == 1) {
+        what = "salad assembled by " + this.person.name;
+      } else {
+        what = this.person.name + "'s freshly-baked space-bread";
+      }
+      this.person.ship.addAThing("food", what, observation, galleyOrLounge[r]);
     }
     //Done
     return super.taskDone();
@@ -776,5 +822,82 @@ class EnemyShipTask extends Task{
 
   describeFinal(){
     return " reported to battle stations.";
+  }
+}
+
+//-----------------------------//
+
+//-> person is sick / injured (can happen randomly, or if they are already sick/injured)
+class PoorHealthTask extends Task{
+  constructor(person) {
+    super(person);
+    this.taskName = "Poor Health";
+    this.howLong = 5;
+    this.getsTreatment = false;
+    this.initialDescription = this._getInitDesc();
+    this.finalDesc = "";
+  }
+
+  _getInitDesc(){
+    if (this.person.hasMajorInjury() != ""){
+      this.getsTreatment = true;
+      return " is laying in bed in the sick bay.";
+    }
+
+    if (this.person.hasMinorInjury() != ""){
+      this.getsTreatment = true;
+      if (random(2) == 0){
+        return " is healing from a " + this.person.hasMinorInjury() + ".";
+      } else {
+        return " complained about " + this.person.getPronoun(true) + " " + this.person.hasMinorInjury() + ".";
+      }
+    }
+
+    if (this.person.isSick()){
+      this.getsTreatment = true;
+      return "...";
+    }
+
+    //--otherwise.... (minor thing, so just loses a bit of health)
+    this.getsTreatment = false;
+    return " is feeling a little ill.";
+  }
+
+  run(){
+    super.run();
+    if (this.getsTreatment){
+      this.person.adjustHealth(1);
+    } else {
+      this.person.adjustHealth(-1);
+    }
+  }
+
+  taskDone() {
+    //--TREATMENT--//
+    //TODO: check if medic. If so, better chance for healing!
+    if (this.getsTreatment){
+      var skill = 0; //medic's skill (0 if no medic)
+      var chance_to_heal = this.person.health + skill;
+      var chance_to_get_worse = 1;
+      if (chance(chance_to_heal, 100)){
+        this.person.updateHealthIssues_Injury(NO_INJURIES, "");
+        this.person.adjustHealth(20);
+        this.finalDesc = " is fully healed!";
+      } else if (chance(chance_to_get_worse, 100)){
+        this.person.adjustHealth(-10);
+        this.finalDesc = "'s condition has deteriorated."
+      } else {
+        this.finalDesc = "'s condition is stable.";
+      }
+    }
+    return super.taskDone();
+  }
+
+  describeFinal(){
+    if (this.getsTreatment){
+      return this.finalDesc;
+    } else {
+      return " is starting to feel a little better.";
+    }
   }
 }

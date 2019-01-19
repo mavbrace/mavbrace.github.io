@@ -40,7 +40,7 @@ class Galaxy {
     //-----//
     this.planets = []; //planet IDs are the indices
     for (var i = 0; i < NUM_PLANETS; i++){
-      this.planets.push(new Planet(this._randomLocInGalaxy()));
+      this.planets.push(new Planet(this._randomLocInGalaxy(), i));
     }
     this.evil = new Evil(this._randomLocInGalaxy());
   }
@@ -124,10 +124,11 @@ class CelestialObject {
 
 //------PLANET--------//
 class Planet extends CelestialObject {
-  constructor(coords){
+  constructor(coords, indexID){
     super(coords);
     this.name = this._planetNameMaker();
     this.type = "planet";
+    this.indexID = indexID;
   }
 
   _planetNameMaker(){

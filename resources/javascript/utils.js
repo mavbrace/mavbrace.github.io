@@ -89,7 +89,7 @@ function random(n){
   return Math.floor(Math.random() * n);
 }
 
-//the chance is 'n out of total' (n normally will be 1) (also total > n)
+//the chance is 'n out of total' (n normally will be 1) (also, total > n)
 //returns true if n
 function chance(n, total){
   var r = Math.floor(Math.random() * total);
@@ -101,7 +101,7 @@ function chance(n, total){
 }
 
 //-> input array of 'tickets' -> each element of the tickets array is a certain number of tickets 'purchased'
-//-> outputs the index of the winner 
+//-> outputs the index of the winner
 function lottery(tickets){
   if (tickets.length <= 0){
     console.log("Something went wrong with the lottery: no tickets.")
