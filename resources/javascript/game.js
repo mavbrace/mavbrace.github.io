@@ -469,9 +469,9 @@ class Game {
     for (var i = 0; i < keyParts.length; i++){
       if (parts[keyParts[i]] != null){
         if (keyParts[i] == "hairColour" || keyParts[i] == "hairOutline"){
-          crewContext.drawImage(parts[keyParts[i]][whatHairLength],0,0,320,200);
+          crewContext.drawImage(parts[keyParts[i]][whatHairLength],-10,-7,350,210);
         } else {
-          crewContext.drawImage(parts[keyParts[i]],0,0,320,200);
+          crewContext.drawImage(parts[keyParts[i]],-10,-7,350,210);
         }
       } else {
         console.log("Error: " + keyParts[i] + " is null.");

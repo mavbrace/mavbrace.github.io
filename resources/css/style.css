@@ -178,7 +178,7 @@ input {
   position: absolute;
   bottom: 0;
   width: 100%;
-  background-color: red;
+  background-color: rgb(170, 2, 10);
   padding: 10px;
 }
 
@@ -233,9 +233,11 @@ input {
   display:block;  /* centering...*/
   margin-left: auto;  /* centering...*/
   margin-right: auto;  /* centering...*/
-  height: 70%;
-  width: 60%;
-  background-color: rgb(240, 240, 240);
+  height: 100%;
+  max-height:150px;
+  width: 70%;
+  max-width:300px;
+  background-color: rgb(200, 0, 0);
   border: 1px solid rgb(10, 14, 10);
   border-radius: 10px;
 }
