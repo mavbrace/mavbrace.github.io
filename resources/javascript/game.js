@@ -77,6 +77,9 @@ class Game {
     strangersVisibilityOn(false);
     toggleButton.style.display = "none";
     newDestButton.style.display = "none";
+    //just hide the character slideshow.
+    document.getElementById("frontside").style.display = "none";
+    moreCrewInfoBtn.style.display = "none";
     // reset slideshow
     this.slideshowIndex = -1;
     // reset message
@@ -145,7 +148,7 @@ class Game {
       //---finished updating ship's log---//
     }
 
-    //--[ Add necessary wear-and-tear to ship, etc ]--//
+    //--[ Add necessary wear-and-tear to ship, etc! ]--//
     //----> change how this is done, maybe?
     this.ship.updateShip(this.iteration);
     //----------[ EVENTS ]----------//
@@ -205,7 +208,9 @@ class Game {
 
   updateJourneyInfoHTML(){
     //....update journey info
-    journeyText_Element.innerHTML = "FUNDS: " + this.ship.funds + " units<br>";
+    journeyText_Element.innerHTML = "FUNDS: " + this.ship.funds + " units | ";
+    journeyText_Element.innerHTML += "PROVISIONS: " + this.ship.provisions + " | ";
+    journeyText_Element.innerHTML += "FUEL: " + this.ship.fuel + "%<br>";
     journeyText_Element.innerHTML += "DAY: " + this.iteration + "<br>";
     controlPanelText_Element.innerHTML = "DESTINATION: ";
     if (this.ship.currentJourney != null){
@@ -277,10 +282,9 @@ class Game {
     updateControlPanelNotifs("docked at " + this.ship.whichCelestialBody.name);
 
     warningsText_Element.innerHTML = ""; //NOTE: get rid of this later.
-    logText_Element.innerHTML = "You look around the station, spotting a few strangers who look open to conversation.<br>";
+    logText_Element.innerHTML = M_HIRING;
     if (this.ship.people <= 0){
-      logText_Element.innerHTML += "Besides the fact that you need a crew, you've been feeling rather lonely lately.";
-      logText_Element.innerHTML += " Probably should start trying to hire some people."
+      logText_Element.innerHTML += M_FIRST_HIRING;
     }
 
     var tempPeople = [];
@@ -309,6 +313,9 @@ class Game {
   addNewPersonToShip(newPerson){
     if (this.slideshowIndex == -1){
       this.slideshowIndex = 0; //begin to display slideshow.
+    }
+    if (this.ship.people.length == 0){
+      newPerson.isFirstMate = true;
     }
     this.ship.people.push(newPerson);
   }
@@ -431,7 +438,6 @@ class Game {
       crewMemberDesc.innerHTML = "";
       crewContext.clearRect(0, 0, crewCanvas.width, crewCanvas.height);
     } else {
-      console.log("......");
       if (this.ship.people.length > this.slideshowIndex){
         //--update slideshow--//
         var crewmember = this.ship.people[this.slideshowIndex];

@@ -32,6 +32,7 @@ class Person{
     this.energy_level = 50; // 0 -> 100
     this.moodIndex = 2; //pertains to MOODS
     //this.competance = 0;
+    this.isFirstMate = false; //1 first mate, who deals with stuff.
     this.health = 100; // if 0, dead.
     this.healthIssues = { "isSick": false,
                           "injuryLevel": NO_INJURIES,
@@ -244,6 +245,9 @@ class Person{
       desc += ".";
     }
 
+    if (this.isFirstMate){
+      desc += "<br>< FIRST MATE >"
+    }
     desc += "<br>-fitness level: " + this.fitness;
     desc += "<br>-motivation level: " + this.motivation_level;
 

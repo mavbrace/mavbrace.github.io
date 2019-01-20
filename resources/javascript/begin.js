@@ -19,10 +19,12 @@ class Begin{
     this.msg = document.querySelector("#beginText");
 
     //-----[ FIRST ]-----//
-    this.txt0 = "<i>You have reached your destination... You have reached your destination...</i>";
+    this.txt0 = "Blinking red lights and a tinny voice wake you from your sleep.";
+    this.txt0 += "<br><i>'You have reached your destination... You have reached your destination...'</i>";
     this.btn0 = "HUH?";
     //-----[ 2ND ]-----//
-    this.txt1 = "You blink and sit up.<br><i>Where... am I?</i>";
+    this.txt1 = "You blink and sit up. <br>"
+    this.txt1 += "<br><i>Where... am I?</i>";
     this.txt1 += "<br>You look around, seeing that you sit in the bridge of a spaceship.";
     this.txt1 += "<br><i>Your</i> spaceship, you suddenly recall.";
     this.txt1 += "<br>What was its name, again?";

@@ -45,10 +45,14 @@ goButton.onclick = function(){
 
     updateControlPanelNotifs("");
     if (game.iteration == 0){
+      //first click of the game.
       game.setup();
+      //reveal some things.
       goButton.innerHTML = "PROGRESS";
       toggleButton.style.display = "inline";
       newDestButton.style.display = "inline";
+      document.getElementById("frontside").style.display = "block";
+      moreCrewInfoBtn.style.display = "block";
       //--> go...
       game.go();
     } else {

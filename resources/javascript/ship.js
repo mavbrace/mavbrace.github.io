@@ -23,6 +23,9 @@ class Ship {
     this.inFlight = true; //after docking, inflight = false (really similar to this.dockingPossible)
 
     this.funds = STARTING_MONEY; //your money
+    this.provisions = STARTING_PROVISIONS; //food, drink, equipment
+    this.fuel = STARTING_FUEL; //ship's fuel.
+
     this.integrity = 20; // for now, rate at which ship decays
     this.level = 0; // can work to upgrade your ship
     this.things = []; // 'things' strewn about the ship - (**'Thing' objects**)
@@ -256,6 +259,13 @@ class Ship {
     //--[make sure all the parts are above 0]--//
     this._ensurePartsAboveZero();
     //----------------------------------------//
+
+    //---------//
+    //reduce provisions. Each person consume [x] provision per day.
+    this.provisions -= (this.people.length * PROVISIONS_PPPD);
+    //reduce fuel. Ship consume [x]% of fuel per day.
+    this.fuel -= STARTING_FUEL_ECONOMY;
+    //---------//
 
   }
 

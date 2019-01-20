@@ -9,25 +9,42 @@
 function nameMaker(originOfName, gender){
   var typesOfNamesAvailable = 5;
   var type = originOfName % typesOfNamesAvailable; //there are only so many types I can make
-
+  //at the moment there are more names than origins, so...
+  if (random(10) == 0){
+    type = typesOfNamesAvailable - 1; //last type has a chance to appear!
+  }
   //----- 5 types atm -----//
-  var options = [[],[],[],[]];
+  var options = [[],[],[],[],[]];
   var pattern = [0,1,2];
   if (type == 0){
-    options[0] = ["G","S","War","Wr","Ph","Th","Car","Am","A"];
+    options[0] = ["G","S","War","W","Ph","Th","Car","Am","A"];
     options[1] = ["if","am","er","ar","od","um","y","iv","an"];
     options[2] = ["","na","iv","e","ix","mon","tal","imon","it","sid"];
-    pattern = [0,1,2]
+    options[3] = ["sa","na","ine","e","tay"];
+    if (gender == FEMALE){
+      pattern = [0,1,3];
+    } else if (gender == MALE){
+      pattern = [0,1,2];
+    } else {
+      pattern = [0,1];
+    }
   } else if (type == 1) {
-    options[0] = ["Fl","Mn","St","Sh","E","P","En","Esht","Esh","Ish","T"];
-    options[1] = ["ou","o","e","o","u"];
-    options[2] = ["m","ll","l","ss","nd","r","dd"];
-    options[3] = ["ian","ia","ius"];
+    options[0] = ["Fl","Mn","St","Sh","E","P","En","Esht","Esh","Ish","T","Bl"];
+    options[1] = ["ou","o","e","o","u","ee"];
+    options[2] = ["m","sh","l","ss","nd","r","dd"];
+    options[3] = ["ian","ius"];
+    options[4] = ["ia","ell"];
     var r = random(2);
     if (r == 0){
       pattern = [0,1,2];
     } else {
-      pattern = [0,1,2,3];
+      if (gender == FEMALE){
+        pattern = [0,1,2,4];
+      } else if (gender == MALE){
+        pattern = [0,1,2,3];
+      } else {
+        pattern = [0,1];
+      }
     }
   } else if (type == 2) {
     options[0] = ["Wolf","Rain","Hawk","Wren","Ash","Vale",
@@ -45,17 +62,20 @@ function nameMaker(originOfName, gender){
       pattern = [2];
     }
   } else if (type == 3) {
-    options[0] = ["Minna","Suzy","Sam","Marla","Nora","Sonya","Rosy","Song",
-            "Autumn","Dawn","Willow","Glenda","Agatha","Jenny","Laura","Megan",
-            "Leah","June","Alissa","Gwen"]; //female
-    options[1] = ["Sam","Benedict","Frank","Damon","Jesse","Oliver","Forrest",
-            "Leo","Dusty","Jamie","Tobias","Ed","Dan","Danny","Scott","Jack",
-            "Zack","Fred","Thomas","Glen"]; //male
+    options[0] = ["Min","Su","Sa","Mar","Nor","Son","Ro","Aut","Daw","Will",
+                  "Da","Jes","Oli","S","Jami","Tob","Ag","Le"];
+    options[1] = ["a","sie","zy","my","la","ya","sy","ow","en","atha","ah"];
+    options[2] = ["mon","ver","o","cott","ias","now"];
+    options[3] = ["umn","rin","thi","i","of","fee","sun"];
+
     if (gender == FEMALE){
-      pattern = [0];
+      pattern = [0,1];
+    } else if (gender == MALE){
+      pattern = [0,2];
     } else {
-      pattern = [1];
+      pattern = [1,3];
     }
+
   } else {
     options[0] = ["T","J","Sh","Z","H","Ch","Ach"];
     options[1] = ["a","o","i","ai","ii","e"];

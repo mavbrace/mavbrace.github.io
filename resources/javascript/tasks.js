@@ -349,8 +349,7 @@ class PaintingTask extends Task{
 
   _aboutThePainting(){
     //format should be, for example, 'they noted the [blue and white colour] with interest'
-    var options = ["cold-toned colours", "fiery colours", "roughly-drawn figures","imbedded LEDs",
-                    "hand-made frame", "ocean scene", "abstract shapes", "thickly-applied paint"]
+    var options = ["cold-toned colours", "fiery colours", "roughly-drawn figures","imbedded LEDs","hand-made frame", "ocean scene", "abstract shapes", "thickly-applied paint"]
     return options[random(options.length)];
   }
 

@@ -29,10 +29,16 @@ var MAX_CARGO = 3;
 //--people (includes from main)----//
 var NUMBER_OF_INIT_PEOPLE = 4; //FOR GAME: 0
 var STARTER_FITNESS_VALUE_MAX = 10; // therefore fitness will be a random value between 0 and ...MAX - 1
-//--ship----//
+//==== ship ====//
 var CHANCE_FOR_DAMAGE_BY_SPACE_DEBRIS = 5; //1 in chance_for_major_damage, default: 10
 var CHANCE_FOR_ENEMY_SHIP = 10; // default: 12
+var PROVISIONS_PPPD = 1; // provisions Per-Person-Per-Day
+var STARTING_FUEL_ECONOMY = 2; //x percent per day.
 var STARTING_MONEY = 100; // x units to start with.
+//-> first mate manages these 2 things:
+var STARTING_PROVISIONS = 100; // 100...provisions to start with.
+var STARTING_FUEL = 100; //100 percent fueled
+//~~~~
 var CHANCE_FOR_INJURY_BY_ENEMY_SHIP = 2; //1 in chance for...
 var CHANCE_FOR_INJURY_BY_SPACE_DEBRIS = 3; //1 in chance for...
 //--tasks--//
