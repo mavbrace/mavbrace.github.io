@@ -18,6 +18,7 @@ class Game {
     this.possibleJourney = ""; //A Journey as set in the MODAL, not the official journey!!!
     this.possiblePurchasedTradeItem = null; // when docked, a trade item you are considering buying.
     this.possibleCrewMember = null; //A Person, ie a stranger, when docked, you are considering hiring.
+    //the possibleCrewMember (Person object) has a hiringStage.
     //-- crew slideshow --//
     this.slideshowIndex = -1; //corresponds to index of ship.people: -1 means nobody is shown.
     //--travelling...//
@@ -92,6 +93,7 @@ class Game {
 
   //--GO--//
   go(){
+    console.log("PEOPLE ABOARD: " + this.ship.people.length);
     //0. update location AND draw new location on MODAL
     if (this.ship.currentJourney != null){
       if (this.ship.currentJourney.isDone()){
@@ -112,26 +114,36 @@ class Game {
     logText_Element.innerHTML = "";
 
     for (var i = 0; i < TICK_BUNDLE; i++) {
-
+      //1.
       for (var j = 0; j < this.ship.people.length; j++) {
-        this.ship.people[j].waitingForTasks();
+        if (!this.ship.people[j].pleaseRemove){
+          this.ship.people[j].waitingForTasks();
+        }
       }
+      //2.
       for (var j = 0; j < this.ship.people.length; j++){
-        this.ship.people[j].manageTasks();
+        if (!this.ship.people[j].pleaseRemove){
+          this.ship.people[j].manageTasks();
+        }
       }
+      //3.
       for (var j = 0; j < this.ship.people.length; j++) {
-        this.ship.people[j].endTasks();
+        if (!this.ship.people[j].pleaseRemove){
+          this.ship.people[j].endTasks();
+        }
       }
 
       this.ship.tick++; // advancing time
     }
-
 
     //---------[ UPDATE SHIP'S LOG ]----------//
     //-> CLEAR SHIPLOG FROM BEFORE
     var shipLog = []; //array of length TICK_BUNDLE
     if (this.ship.people.length <= 0){
       shipLog.push("The ship echoes with emptiness.")
+      //switch back to frontside of card if it's on the back, and clear canvas.
+      flipToFront();
+      this.clearPersonCanvas();
     } else {
       //-> POPULATE WITH EMPTY STRINGS, READY TO BE FILLED (SOME TICKS REMAIN EMPTY)
       for (var i = 0; i < TICK_BUNDLE; i++){
@@ -140,7 +152,7 @@ class Game {
       //->GENERATE THE LOG BY GATHERING, FOR EACH PERSON, THEIR PERSONAL LOGS
       for (var i = 0; i < this.ship.people.length; i++){
         var personalLog = this.ship.people[i].log;
-        //TODO: clear each person's old logs so they don't build up forever
+        //TODO: clear each person's old logs so they don't build up forever!!
         for (var j = 0; j < personalLog.length; j++){
           shipLog[personalLog[j][0] - (TICK_BUNDLE * this.iteration)] += personalLog[j][1] + " ";
         }
@@ -148,8 +160,26 @@ class Game {
       //---finished updating ship's log---//
     }
 
+
+    //=========UPDATE EACH PERSON==================//
+    for (var j = 0; j < this.ship.people.length; j++){
+      if (!this.ship.people[j].pleaseRemove){
+        this.ship.people[j].updateSelf(this.iteration);
+      }
+    }
+    //======FINAL STEP: delete any dead people=====//
+    for (var j = this.ship.people.length-1; j >= 0; j--){
+      if (this.ship.people[j].pleaseRemove){
+        //1. add their name to the list of deceased
+        this.ship.deceased.push(this.ship.people[j].name);
+        //2. DELETE
+        this.ship.people.splice(j,1);
+      }
+    }
+    //=============================================//
+
+
     //--[ Add necessary wear-and-tear to ship, etc! ]--//
-    //----> change how this is done, maybe?
     this.ship.updateShip(this.iteration);
     //----------[ EVENTS ]----------//
     this.handleEvents();
@@ -162,6 +192,9 @@ class Game {
     warningsText_Element.innerHTML += this.ship.getWarningsAsString();
     //--------------------//
     this._updateHTML(shipLog);
+    //--> finally, flip the crew slideshow to the front and do some updating on it
+    //flipToFront();
+    this.updateCrewSlideshow();
 
   }
 
@@ -170,18 +203,18 @@ class Game {
     //-----update info-----//
     //--> ADD LOG TO HTML <--//
     for (var i = 0; i < shipLog.length; i++){
-      //var tickLabel = i + (TICK_BUNDLE * this.iteration)
       var tickLabel = "<strong>" + this.tickToClockTime(i) + "</strong>";
       logText_Element.innerHTML += tickLabel + "  " + shipLog[i] + "<br>";
     }
     //----------------------//
 
     //-----[ PRINT OUT SHIP'S HISTORY ]------//
+    //-> last added is first
     shipHistoryText_Element.innerHTML = "";
     if (this.ship.shipHistory.length <= 0){
       shipHistoryText_Element.innerHTML = "< No reports >";
     } else {
-      for (var i = 0; i < this.ship.shipHistory.length; i++){
+      for (var i = this.ship.shipHistory.length-1; i >= 0; i--){
         shipHistoryText_Element.innerHTML += this.ship.shipHistory[i] + "<br>";
       }
     }
@@ -433,28 +466,34 @@ class Game {
 
   //--> crew member 'slideshow' (not really a slideshow, but...)
   updateCrewSlideshow(updateCanvas = true){
-    if (this.slideshowIndex <= -1){
+    if (this.slideshowIndex <= -1 || this.ship.people.length <= 0){
       //empty out html, including clearing the canvas to white.
-      crewMemberDesc.innerHTML = "";
-      crewContext.clearRect(0, 0, crewCanvas.width, crewCanvas.height);
+      this.clearPersonCanvas();
     } else {
-      if (this.ship.people.length > this.slideshowIndex){
-        //--update slideshow--//
-        var crewmember = this.ship.people[this.slideshowIndex];
-        var desc = crewmember.title + " " + crewmember.name + " (from " +
-              crewmember.originPlanet.name + ")";
-        if (crewmember.title == "Specialist"){
-          desc += " " + crewmember.specialty;
-        }
-        crewMemberDesc.innerHTML = desc;
-        //update image
-        if (updateCanvas){
-          this.updatePersonCanvas(crewmember);
-        }
-      } else {
-        console.log("Error: index out of bounds (index: " + this.slideshowIndex + ")");
+      //check if out of bounds. If so, choose an index that IS in bounds.
+      if (this.slideshowIndex >= this.ship.people.length){
+        this.slideshowIndex = this.ship.people.length-1;
+      }
+      //--update slideshow--//
+      var crewmember = this.ship.people[this.slideshowIndex];
+      var desc = crewmember.title + " " + crewmember.name + " (from " +
+            crewmember.originPlanet.name + ")";
+      if (crewmember.title == "Specialist"){
+        desc += " " + crewmember.specialty;
+      }
+      crewMemberDesc.innerHTML = desc;
+      //update image
+      if (updateCanvas){
+        this.updatePersonCanvas(crewmember);
       }
     }
+  }
+
+  clearPersonCanvas(){
+    //empty out html, including clearing the canvas to white.
+    crewMemberDesc.innerHTML = "";
+    crewContext.clearRect(0, 0, crewCanvas.width, crewCanvas.height);
+    this.slideshowIndex = -1; //just to ensure it does.
   }
 
   updatePersonCanvas(whichPerson){
@@ -491,8 +530,11 @@ class Game {
   displayMorePersonInfo(){
     //TODO: checks
     //TODO: finish this up
-
     var crewmember = this.ship.people[this.slideshowIndex];
+    if (!crewmember){
+      console.log("crewmember doesn't exist...");
+      return;
+    }
     var desc = "--| " + crewmember.name + " |--<br>";
     desc += crewmember.getFullDesc();
     document.getElementById("energyLevel_element").innerHTML = "" + crewmember.energy_level;

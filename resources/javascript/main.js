@@ -59,7 +59,13 @@ goButton.onclick = function(){
     //--testing:animation---//
     var anim = document.getElementById("shipAnimDiv");
     anim.style.animation = "slide 2s linear infinite";
-    window.setTimeout(andProgress,1000);
+    if (!NO_DELAY){
+      window.setTimeout(andProgress,DELAY);
+    } else {
+      //just go there immediately (debug only)
+      andProgress();
+    }
+
     //----------------------//
     }
 
@@ -78,20 +84,29 @@ function andProgress(){
   game.go();
 }
 
+//=============[hiring stuff]===============//
 
 addPersonButton.onclick = function(){
   //add the person in question to the ship
+  //----> hide the extra option buttons.
+  motiveDiv.style.display = "none";
+  //----> continue
   if (game.possibleCrewMember != null){
+    //============================//
+    //0. check if there's too many people!
+    if (game.ship.people.length > MAX_CREW){
+      strangerDesc_Element.innerHTML = "Your ship is full.";
+      return;
+    }
+    //============================//
     //-->Check if that person is a crew member already
     //-> using Array.prototype.map() to do so in one line, via the person's unique ID
     var check = game.ship.people.map(function(p){ return p.id; }).indexOf(game.possibleCrewMember.id);
     if (check == -1){
-      //a. They're NOT in the crew.
-      strangerDesc_Element.innerHTML = game.possibleCrewMember.name + " has been hired!";
-      game.addNewPersonToShip(game.possibleCrewMember, game.ship);
-      //note: don't bother removing person from station (or planet, same thing)
-      //...logic-wise, they're still ON the planet/station until you've taken off...
-      //... so it's okay.
+      //a. They're NOT in the crew, everything's a go.
+      //=================================//
+      game.possibleCrewMember.hiringStage = handleHiringStage(game.possibleCrewMember.hiringStage, true);
+      //=================================//
     } else {
       //b. They ARE in the crew, so let the player know.
       strangerDesc_Element.innerHTML = "Um, you already hired " + game.possibleCrewMember.name + ".";
@@ -103,48 +118,202 @@ addPersonButton.onclick = function(){
   //TODO: update relevant HTML (note: but don't need to get rid of stranger-button or anything)
 }
 
+//----------------//
+//input: stage(int) and goToNext(boolean)
+function handleHiringStage(currentStage, goToNext){
+  addPersonButton.style.display = "inline";
+  motiveDiv.style.display = "none";
+  //-->...
+  var stage = currentStage;
+  //--> if specified, go to next stage.
+  if (goToNext){
+    if (stage < 3){
+      stage++;
+    }
+  }
+  //--> continue on...
+  if (stage == 0){
+    strangerDesc_Element.innerHTML = "Turns out the stranger's name is " + game.possibleCrewMember.name;
+    if (game.possibleCrewMember.title != ""){
+      if (game.possibleCrewMember.title == "Engineer"){
+        strangerDesc_Element.innerHTML += ", and they're an " + game.possibleCrewMember.title + ".";
+      } else {
+        strangerDesc_Element.innerHTML += ", and they're a " + game.possibleCrewMember.title + ".";
+      }
+    } else {
+      strangerDesc_Element.innerHTMl += ".";
+    }
+    addPersonButton.innerHTML = " HIRE ";
+
+  } else if (stage == 1){
+    setupMotiveButtons();
+    motiveDiv.style.display = "block";
+    addPersonButton.style.display = "none"
+    strangerDesc_Element.innerHTML = game.possibleCrewMember.name + " stares at you for a moment, then asks, 'Why should I join you?'";
+
+  } else if (stage == 2){
+    strangerDesc_Element.innerHTML = "'Um, " + game.possibleCrewMember.guessedMotive + "?' you try.";
+    motiveDiv.style.display = "none";
+    addPersonButton.style.display = "inline";
+    addPersonButton.innerHTML = "CONTINUE";
+
+  } else if (stage == 3){
+    //----[ HIRING ]----//
+    addPersonButton.style.display = "none";
+    if (game.possibleCrewMember.guessedMotive == game.possibleCrewMember.motive){
+      strangerDesc_Element.innerHTML = game.possibleCrewMember.name + "'s eyes light up. 'Well why didn't you say so! I'm in.'<br>";
+      strangerDesc_Element.innerHTML += game.possibleCrewMember.name + " has been hired!";
+      game.addNewPersonToShip(game.possibleCrewMember, game.ship);
+      //note: don't bother removing person from station (or planet, same thing)
+      //...logic-wise, they're still ON the planet/station until you've taken off...
+      //... so it's okay.
+      //-> increase stage here.
+      stage++;
+    } else {
+      //failure...
+      strangerDesc_Element.innerHTML = game.possibleCrewMember.name + " laughs at you. '" + capitalize(game.possibleCrewMember.guessedMotive) + ", really? <i>Really?</i>'  Before you can change your answer " + game.possibleCrewMember.name + " is gone.";
+      stage += 2;
+    }
+
+  } else if (stage == 4){
+    strangerDesc_Element.innerHTML = game.possibleCrewMember.name + " is now a member of your crew.";
+
+  } else if (stage == 5){
+    strangerDesc_Element.innerHTML = "..."; //failure.
+
+  } else {
+    console.log("Error when hiring.");
+    strangerDesc_Element.innerHTML = "...";
+  }
+  return stage;
+}
+//---------------//
+
+function setupMotiveButtons(){
+  //-> set up motive buttons!
+  var trueMotive = game.possibleCrewMember.motive;
+  //-> choose a random wrong motive; can't be the true motive of course.
+  var falseMotiveIndex = random(MOTIVES.length);
+  if (MOTIVES[falseMotiveIndex] == trueMotive){
+    falseMotiveIndex = (falseMotiveIndex+1) % MOTIVES.length;
+  }
+  if (random(2) == 0){
+    motiveButton1.innerHTML = trueMotive;
+    motiveButton2.innerHTML = MOTIVES[falseMotiveIndex];
+  } else {
+    motiveButton1.innerHTML = MOTIVES[falseMotiveIndex];
+    motiveButton2.innerHTML = trueMotive;
+  }
+}
+
+strangerButton0.onclick = function(){
+  handleStrangerClicks(0);
+}
+strangerButton1.onclick = function(){
+  handleStrangerClicks(1);
+}
+strangerButton2.onclick = function(){
+  handleStrangerClicks(2);
+}
+strangerButton3.onclick = function(){
+  handleStrangerClicks(3);
+}
+
+function handleStrangerClicks(index){
+  if (game.peopleInStation.length > 0){
+    game.possibleCrewMember = game.peopleInStation[index];
+    game.possibleCrewMember.hiringStage = handleHiringStage(game.possibleCrewMember.hiringStage, false);
+
+  } else {
+    console.log("Error: no people here.");
+    strangerDesc_Element.innerHTML = "-null-";
+  }
+}
+
+
+motiveButton1.onclick = function(){
+  handleMotiveClick(motiveButton1.innerHTML);
+}
+motiveButton2.onclick = function(){
+  handleMotiveClick(motiveButton2.innerHTML);
+}
+
+function handleMotiveClick(chosenMotive){
+  game.possibleCrewMember.guessedMotive = chosenMotive;
+  game.possibleCrewMember.hiringStage = handleHiringStage(game.possibleCrewMember.hiringStage, true);
+}
+//================================================//
+
+
 //TOGGLE BUTTON = dock/take off button! :)
 toggleButton.onclick = function(){
   //for the moment, toggles between space station and the main view
   //implement the changes: for now, right column
   if (game.view == MAIN_VIEW){
+    //-> STATION VIEW or EVIL VIEW
     //===[ SHIFT TO STATION VIEW ]===// (ie DOCK)
     if (game.ship.whichCelestialBody != null && game.ship.dockingPossible){
-      updateControlPanelNotifs("docking...");
-      game.view = SPACE_STATION_VIEW;
-      game.ship.inFlight = false;
-      //----HTML----//
-      toggleButton.innerHTML = "TAKE OFF";
-      logText_Element.innerHTML = "...";
-      rightColumnTitle_Element.innerHTML = "OBSERVATIONS";
-      purchaseItemText.innerHTML = "...";
-      updateBuyerText();
-      //------------//
-      shipViewVisibilityOn(false);
-      tradeDivVisibilityOn(true);
-      strangersVisibilityOn(true);
-      //immediate results:
-      game.updateJourneyInfoHTML();
-      game.spaceStationGo();
+      if (game.ship.whichCelestialBody.type == "evil"){
+        updateControlPanelNotifs("approaching...");
+        game.view = SPACE_STATION_VIEW;
+        game.ship.inFlight = false;
+        //----HTML----//
+        //-> hide all normal columns
+        c1 = document.getElementsByClassName("shipcolumn")[0];
+        c2 = document.getElementsByClassName("centercolumn")[0];
+        c3 = document.getElementsByClassName("logcolumn")[0];
+        c1.style.display = "none";
+        c2.style.display = "none";
+        c3.style.display = "none";
+        //-> display the evilDiv
+        evilDiv = document.getElementById("evilDiv");
+        evilDiv.style.display = "block";
+        //--------TODO....this----//
+      } else {
+        //NORMAL SPACE-STATION VIEW
+        updateControlPanelNotifs("docking...");
+        game.view = SPACE_STATION_VIEW;
+        game.ship.inFlight = false;
+        game.ship.firstMateDuties(); //first mate performs station duties.
+        //----HTML----//
+        toggleButton.innerHTML = "TAKE OFF";
+        logText_Element.innerHTML = "...";
+        rightColumnTitle_Element.innerHTML = "OBSERVATIONS";
+        purchaseItemText.innerHTML = "...";
+        updateBuyerText();
+        //------------//
+        shipViewVisibilityOn(false);
+        tradeDivVisibilityOn(true);
+        strangersVisibilityOn(true);
+        //immediate results:
+        game.updateJourneyInfoHTML();
+        game.spaceStationGo();
+        //-----------//
+      }
+
     } else {
       updateControlPanelNotifs("docking impossible");
     }
   } else {
-    //===[ SHIFT TO SPACE (MAIN) VIEW ]===// (ie Taking off)
-    updateControlPanelNotifs("taking off...");
-    game.view = MAIN_VIEW;
-    game.ship.inFlight = true;
-    //----HTML----//
-    toggleButton.innerHTML = "DOCK";
-    strangerDesc_Element.innerHTML = "";
-    rightColumnTitle_Element.innerHTML = "LOG";
-    //------------//
-    shipViewVisibilityOn(true);
-    tradeDivVisibilityOn(false);
-    strangersVisibilityOn(false);
-    //immediate results:
-    game.go();
+    shiftToMainView("taking off...");
   }
+}
+
+function shiftToMainView(message){
+  //===[ SHIFT TO SPACE (MAIN) VIEW ]===// (ie Taking off)
+  updateControlPanelNotifs(message);
+  game.view = MAIN_VIEW;
+  game.ship.inFlight = true;
+  //----HTML----//
+  toggleButton.innerHTML = "DOCK";
+  strangerDesc_Element.innerHTML = "";
+  rightColumnTitle_Element.innerHTML = "LOG";
+  //------------//
+  shipViewVisibilityOn(true);
+  tradeDivVisibilityOn(false);
+  strangersVisibilityOn(false);
+  //immediate results:
+  game.go();
 }
 
 
@@ -391,32 +560,6 @@ function drawCargo(){
 }
 //----------------------------------//
 
-strangerButton0.onclick = function(){
-  handleStrangerClicks(0);
-}
-strangerButton1.onclick = function(){
-  handleStrangerClicks(1);
-}
-strangerButton2.onclick = function(){
-  handleStrangerClicks(2);
-}
-strangerButton3.onclick = function(){
-  handleStrangerClicks(3);
-}
-
-function handleStrangerClicks(index){
-  strangerDesc_Element.innerHTML = "STRANGER: ";
-  if (game.peopleInStation.length > 0){
-    game.possibleCrewMember = game.peopleInStation[index];
-    strangerDesc_Element.innerHTML = game.possibleCrewMember.name;
-  } else {
-    console.log("Error: no people here.");
-    strangerDesc_Element.innerHTML = "-null-";
-  }
-}
-
-//----------------------------------//
-
 //---SLIDESHOW BUTTONS (CREWMEMBERS)
 leftSlideshowButton.onclick = function(){
   if (game.ship != null){
@@ -473,23 +616,42 @@ moreCrewInfoBtn.onclick = function(){
       //3. add
       game.displayMorePersonInfo();
     } else {
-      //FLIP TO 'front side'
-      //1. change button
-      moreCrewInfoBtn.innerHTML = "MORE INFO";
-      //2. hide + display
-      document.getElementById("flipside").style.display = "none";
-      document.getElementById("frontside").style.display = "block";
-      //crewCanvas.style.display = "block";
-      //3. re-write
-      game.updateCrewSlideshow(false);
+      flipToFront();
     }
   } else {
     console.log("Error: ship is null.");
   }
 }
 
+function flipToFront(){
+  //FLIP TO 'front side'
+  //1. change button
+  moreCrewInfoBtn.innerHTML = "MORE INFO";
+  //2. hide + display
+  document.getElementById("flipside").style.display = "none";
+  document.getElementById("frontside").style.display = "block";
+  //crewCanvas.style.display = "block";
+  //3. re-write
+  game.updateCrewSlideshow(false);
+}
+
 //----------------------------------//
 
+evilInteractionButton.onclick = function(){
+  //-> hide the evilDiv
+  evilDiv = document.getElementById("evilDiv");
+  evilDiv.style.display = "none";
+  //reveal once more.
+  c1 = document.getElementsByClassName("shipcolumn")[0];
+  c2 = document.getElementsByClassName("centercolumn")[0];
+  c3 = document.getElementsByClassName("logcolumn")[0];
+  c1.style.display = "block";
+  c2.style.display = "block";
+  c3.style.display = "block";
+  // shift back to main / inflight view
+  shiftToMainView("Retreating...");
+}
 
+//----------------------------------//
 
 console.log("Done!");

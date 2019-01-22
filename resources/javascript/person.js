@@ -3,6 +3,8 @@ var MALE = 1;
 
 var MOODS = ["terrible","bad","neutral","so-so","good","wonderful"];
 
+var MOTIVES = ["adventure","fortune","fame","company","revenge"];
+
 var NOT_MOTIVATED = 0;
 var MOTIVATED = 1;
 var EXTREMELY_MOTIVATED = 2;
@@ -16,6 +18,9 @@ var MAJOR_INJURIES = 2; // placed in sick bay.
 class Person{
 
   constructor(galaxy, ship, id, name, gender, fitness, title, specialty, originPlanet){
+    this.hiringStage = 0; //before they're part of your crew...
+    this.guessedMotive = ""; //only a guess. True motive is below.
+    //-----
     this.galaxy = galaxy;
     this.ship = ship;
     this.id = id;
@@ -31,12 +36,18 @@ class Person{
     this.motivation_level = MOTIVATED;
     this.energy_level = 50; // 0 -> 100
     this.moodIndex = 2; //pertains to MOODS
+    this.motive = MOTIVES[random(MOTIVES.length)]; //pertains to MOTIVES; what drives them.
     //this.competance = 0;
     this.isFirstMate = false; //1 first mate, who deals with stuff.
     this.health = 100; // if 0, dead.
     this.healthIssues = { "isSick": false,
                           "injuryLevel": NO_INJURIES,
                           "injuryDesc": ""    };
+    //------------[is...]-----------//
+    this.isStarving = false;
+    this.deathIsClose = false;
+    this.isDead = false;
+    this.pleaseRemove = false;
     //------------------------------//
     this.title = title;
     this.specialty = specialty; // only need to fill in if person is a specialist ("" if none)
@@ -59,7 +70,9 @@ class Person{
                           "Wander":1,
                           "Cooking":1,
                           "EnemyShip":100,
-                          "PoorHealth": 1    };
+                          "PoorHealth": 1,
+                          "Death": 100,
+                          "Wondering": 1   };
     //-> visuals
     this.visualFeatures = {"hairColour":null,
                           "skin":null,
@@ -172,7 +185,7 @@ class Person{
   }
 
 
-  //--- RETURNS NAME -OR- IF IT'S THE SAME PERSON, RETURN "him/her/theirself".
+  //--- RETURNS NAME -OR- IF IT'S THE SAME PERSON, RETURN "him/her/themself".
   getName(testPerson){
     if (testPerson === this){
       if (this.gender == FEMALE){
@@ -180,10 +193,21 @@ class Person{
       } else if (this.gender == MALE){
         return "himself";
       } else {
-        return "theirself";
+        return "themself";
       }
     } else {
       return testPerson.name;
+    }
+  }
+
+  //simply returns "himself","herself", or "themself"
+  getSelfPronoun(){
+    if (this.gender == FEMALE){
+      return "herself"
+    } else if (this.gender == MALE){
+      return "himself"
+    } else {
+      return "themself"
     }
   }
 
@@ -247,6 +271,9 @@ class Person{
 
     if (this.isFirstMate){
       desc += "<br>< FIRST MATE >"
+    }
+    if (this.hasPoorHealth()){
+      desc += "<br>## has a " + this.healthIssues["injuryDesc"] + " ##";
     }
     desc += "<br>-fitness level: " + this.fitness;
     desc += "<br>-motivation level: " + this.motivation_level;
@@ -377,10 +404,10 @@ class Person{
     this.healthIssues["injuryLevel"] = level;
     this.healthIssues["injuryDesc"] = desc;
     if (level == MINOR_INJURIES){
-      this.adjustMood(-1); //also, decrease mood by 1.
+      this.adjustMood(-2); //also, decrease mood by 2.
       this.task_chances["PoorHealth"] += 10;
     } else if (level == MAJOR_INJURIES){
-      this.adjustMood(-2); //also, decrease mood by 1.
+      this.adjustMood(-3); //also, decrease mood by 3.
       this.task_chances["PoorHealth"] = 100;
     } else if (level = NO_INJURIES){
       this.adjustMood(1); //happier!
@@ -397,13 +424,21 @@ class Person{
     // Assuming this.waitingFor has otherPerson thing (for now)
     // Checks if both people are doing nothing, then checks if the tasks
     // they are waiting for are the same.
+    //-----//
+    //before all that, check if the person you're waiting for.. is dead.
+    if (this.waitingFor.length > 0 && (!this.waitingFor[0].otherPerson || !this.waitingFor[0] || !this.waitingFor[0].otherPerson.waitingFor[0] || this.waitingFor[0].otherPerson.isDead)){
+      this.task = null; //make sure person is free to choose a dif task.
+      this.waitingFor.splice(0, 1); //remove from waiting-for array
+      return;
+    }
+    //if alive, continue on with the check...
     if (this.waitingFor.length > 0 &&
       this.task == null && this.waitingFor[0].otherPerson.task == null &&
       this.waitingFor[0].pairActivity === this.waitingFor[0].otherPerson.waitingFor[0].pairActivity) {
       // Sets both people's tasks to their next waiting for tasks.
       this.task = this.waitingFor[0];
       this.waitingFor[0].otherPerson.task = this.waitingFor[0].otherPerson.waitingFor[0];
-      // Remove from waiting for array for both people:
+      // Remove from waiting-for array for both people:
       this.waitingFor[0].otherPerson.waitingFor.splice(0, 1);
       this.waitingFor.splice(0, 1);
     }
@@ -413,7 +448,6 @@ class Person{
   manageTasks(){
       //1. choose a new task if needed
       if (this.task == null && this.waitingFor.length == 0){
-        //console.log("Choosing new task...");
         this.chooseNewTask();
       }
       //2. run the task
@@ -443,6 +477,8 @@ class Person{
     // 10 = CookingTask
     // 11 = EnemyShipTask
     // 12 = PoorHealthTask
+    // 13 = DeathTask
+    // 14 = WonderingTask
     //==================================//
     this.possibleTasks = []; //list of task 'IDs'; empty and refill here...
     //-> probability list that will be generated (and picked from):
@@ -508,6 +544,16 @@ class Person{
       this.possibleTasks.push(12);
       probabilities.push(this.task_chances["PoorHealth"]);
     }
+    //13. DeathTask
+    if (this.isDead){
+      console.log(this.name + " is dead.");
+      this.possibleTasks.push(13);
+      probabilities.push(this.task_chances["Death"]);
+      this.pleaseRemove = true; //even if not chosen, MUST set this.
+    }
+    //14. WonderingTask
+    this.possibleTasks.push(14);
+    probabilities.push(this.task_chances["Wondering"]);
 
     //------------------//
     // PICK A TASK //
@@ -534,6 +580,7 @@ class Person{
       }
     }
     //===========================================================//
+    var smallTask = ""; //something that doesn't require a full task.
 
     if (chosenTaskID == 0) {
       newTask = new DoNothingTask(this);
@@ -546,10 +593,14 @@ class Person{
     } else if (chosenTaskID == 4) {
       var r = random(this.knownPeopleInfo.length);
       var conversation_partner = this.ship.findPersonInShipByID(this.knownPeopleInfo[r][0]);
-      if (conversation_partner != null){
+      if (!conversation_partner) {
+        //if this happens to happen, remove that ID from knownPeopleInfo
+        this.knownPeopleInfo.splice(r, 1);
+      } else {
+        //talking to someone alive!
         new TalkingTask(this, conversation_partner, true); // This adds the task...
-        //... to each of the people's waitingFor task queues.
-        // Purposely NOT set to newTask!!
+          //... to each of the people's waitingFor task queues.
+          // Purposely NOT set to newTask!!
       }
     } else if (chosenTaskID == 5){
       newTask = new NavigatorTask(this);
@@ -567,20 +618,90 @@ class Person{
       newTask = new EnemyShipTask(this);
     } else if (chosenTaskID == 12){
       newTask = new PoorHealthTask(this);
+    } else if (chosenTaskID == 13){
+      newTask = new DeathTask(this);
+    } else if (chosenTaskID = 14){
+      newTask = new WonderingTask(this);
     } else {
       //TODO.....handle this?
       console.log("Error: no tasks chosen.");
     }
     //-----[ LOG ]-----//
     if (newTask != null && newTask.initialDescription != ""){
-      var iName = "<i>" + this.name + "</i>"
-      this.log.push([this.ship.tick, iName + newTask.initialDescription]);
+      if (smallTask == ""){
+        var iName = "<i>" + this.name + "</i>";
+        this.log.push([this.ship.tick, iName + newTask.initialDescription]);
+      } else {
+        var iName = "<i>" + this.name + "</i>";
+        this.log.push([this.ship.tick, iName + newTask.initialDescription]);
+      }
     }
     this.task = newTask;
   }
 
 
   //===========================//
+  //once per day.
+  updateSelf(whatIteration) {
+    //every day, update bits and bobs of one's self.
+    //1. hungriness.
+    if (this.ship.provisions <= 0){
+      this.isStarving = true;
+      this.health -= HEALTH_LOST_FROM_STARVATION;
+    } else {
+      this.isStarving = false;
+    }
+    //if not dead... maybe die.
+    if (this.health <= 0 && !(this.isDead)){
+      //uh oh.
+      var r = random(3);
+      if (r == 0){
+        this.health = 1;
+        this.deathIsClose = true;
+      } else if (r == 1){
+        this.health = 0;
+        this.deathIsClose = true;
+      } else {
+        //====[ DEAD ]====//
+        this.isDead = true;
+        this.health = 0;
+        //---> update ship history.
+        var hist = "===[REPORT, DAY " + whatIteration + "]===<br>Sadly, " + this.name + " has died of " + this.getCauseOfDeath() + ". " + capitalize(this.getPronoun(false)) + " was given a space-burial. " + capitalize(this.getPronoun(false)) + " will be missed.<br>";
+        this.ship.shipHistory.push(hist);
+      }
+    } else {
+      this.deathIsClose = false;
+    }
+
+  }
+
+  //--------------------//
+
+  getCauseOfDeath(){
+    //make a list of causes.
+    var causes = [];
+    if (this.isStarving){
+      causes.push("starvation");
+    }
+    //temp
+    causes.push("other causes");
+
+    if (causes.length <= 0){
+      return "natural causes";
+    } else {
+      var str = "";
+      for (var i = 0; i < causes.length; i++){
+        if (causes.length > 1 && i == causes.length-1){
+          str += " and "
+        } else if (i != 0){
+          str += ", "
+        }
+        str += causes[i];
+      }
+      return str;
+    }
+  }
+
   //===========================//
 
 }

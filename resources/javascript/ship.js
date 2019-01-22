@@ -10,7 +10,8 @@ class Ship {
   constructor(shipName) {
     this.shipName = shipName;
     this.shipHistory = []; //-->history pertaining to the ship itself<--
-    this.people = [];
+    this.people = []; //Person objects
+    this.deceased = []; //names (strings) only
 
     this.currentJourney = null; //the Journey (object) the ship is currently on
     this.currentLoc = [(random(9) + 1)*50,(random(5) + 1)*50]; //random, for now
@@ -25,6 +26,7 @@ class Ship {
     this.funds = STARTING_MONEY; //your money
     this.provisions = STARTING_PROVISIONS; //food, drink, equipment
     this.fuel = STARTING_FUEL; //ship's fuel.
+    this.fuelRate = STARTING_FUEL_ECONOMY;
 
     this.integrity = 20; // for now, rate at which ship decays
     this.level = 0; // can work to upgrade your ship
@@ -89,7 +91,6 @@ class Ship {
     if (this.cargo[0].worth == this.cargo[2].worth){
       initWorth *= 2;
     }
-    console.log(initWorth);
     this.craftedCargoWorth = initWorth;
   }
 
@@ -261,10 +262,17 @@ class Ship {
     //----------------------------------------//
 
     //---------//
+    //pay wages. Each person is paid [x] units per day.
+    this.funds -= WAGES_PPPD; //TODO: add ability to turn this off temporarily (when low on funds)
     //reduce provisions. Each person consume [x] provision per day.
     this.provisions -= (this.people.length * PROVISIONS_PPPD);
-    //reduce fuel. Ship consume [x]% of fuel per day.
-    this.fuel -= STARTING_FUEL_ECONOMY;
+    if (this.provisions < 0){
+      this.provisions = 0;
+    }
+    //reduce fuel IF TRAVELLING. Ship consume [x]% of fuel per day.
+    if (this.currentJourney !== null){
+      this.fuel -= this.fuelRate;
+    }
     //---------//
 
   }
@@ -307,8 +315,7 @@ class Ship {
         return this.people[i];
       }
     }
-    //otherwise, return null: this shouldn't happen
-    console.log("Error: could not find person via ID.");
+    //otherwise, return null: this CAN happen (usually if the person has died)
     return null;
   }
 
@@ -339,13 +346,14 @@ class Ship {
       }
     }
 
-
-    this.shipHistory.push("===| REPORT, DAY " + whatIteration + " |===");
-    this.shipHistory.push("The ship has hit a bit of space debris.");
-    this.shipHistory.push("The ship sustained " + partReport + "<br>");
+    var reportToAdd = "";
+    reportToAdd += "===| REPORT, DAY " + whatIteration + " |===<br>";
+    reportToAdd += "The ship has hit a bit of space debris.";
+    reportToAdd += "The ship sustained " + partReport + "<br>";
     if (injuryDesc != ""){
-      this.shipHistory.push(injuryDesc + "<br>");
+      reportToAdd += injuryDesc + "<br>";
     }
+    this.shipHistory.push(reportToAdd);
   }
 
 
@@ -459,11 +467,13 @@ class Ship {
     //================//
     this.battleHistory.push(""); //not using atm
 
-    this.shipHistory.push("===| REPORT, DAY " + whatIteration + " |===");
-    this.shipHistory.push(report + "<br>");
+    var reportToAdd = "";
+    reportToAdd += "===| REPORT, DAY " + whatIteration + " |===<br>";
+    reportToAdd += report + "<br>";
     if (injuryDesc != ""){
-      this.shipHistory.push(injuryDesc + "<br>");
+      reportToAdd += injuryDesc + "<br>";
     }
+    this.shipHistory.push(reportToAdd);
   }
   //=======~~~~~=======//
 
@@ -491,6 +501,40 @@ class Ship {
     //---[ set all parts that are negative to 0 ]---//
     this._ensurePartsAboveZero();
 
+  }
+
+  firstMateDuties(){
+    //1. when at a station, replenish fuel and provisions. TODO: make different kinds of first mates :D
+    //TODO: make this smart. Fuel is easy, since it goes to 100%.
+    var fuel_to_buy = 100 - this.fuel;
+    this.funds -= FUEL_BASE_PRICE * fuel_to_buy;
+    this.fuel += fuel_to_buy;
+    //----
+    var provisions_cost = this.funds + 1; //set it so it's guaranteed to be >= this.funds
+    var provisions_to_buy = 0;
+    if (this.provisions <= 10){
+      //critical
+      provisions_to_buy = 31;
+    } else if (this.provisions > 10 && this.provisions <= 50){
+      //okay
+      provisions_to_buy = 21;
+    } else if (this.provisions > 50 && this.provisions <= 200){
+      //good
+      provisions_to_buy = 11;
+    } else {
+      //too much
+      provisions_to_buy = 1;
+    }
+    while (provisions_cost >= this.funds){
+      provisions_to_buy -= 1;
+      provisions_cost = provisions_to_buy * this.people.length * PROVISIONS_BASE_PRICE;
+    }
+    this.funds -= provisions_cost;
+    this.provisions += provisions_to_buy * this.people.length;
+    //----
+    var firstMateReport = "~~~ first mate's report ~~~";
+    firstMateReport += "<br>-purchased " + FUEL_BASE_PRICE * fuel_to_buy + " units worth of fuel, and " + PROVISIONS_BASE_PRICE * (provisions_to_buy * this.people.length) + " units worth of provisions.<br>";
+    this.shipHistory.push(firstMateReport);
   }
 
 

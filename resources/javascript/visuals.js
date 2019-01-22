@@ -1,4 +1,6 @@
 //-----[ VISUAL THINGS ]-----//
+//TODO: some are queryselector's, some are getElementById's... which is better?
+//TODO: sort this whole file out, clean it up...
 
 //debug
 var debugText = document.querySelector('#debugText');
@@ -233,3 +235,11 @@ function strangersVisibilityOn(reveal){
     strangersDiv.style.display = "none";
   }
 }
+
+//--~Stranger Hiring Option Buttons--~//
+var motiveDiv = document.querySelector("#motiveOptionsDiv");
+var motiveButton1 = document.querySelector('#motiveButton1');
+var motiveButton2 = document.querySelector('#motiveButton2');
+
+//-----EVIL THINGS-------//
+var evilInteractionButton = document.querySelector('#evilInteractionButton');

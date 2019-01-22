@@ -116,7 +116,7 @@ class SleepingTask extends Task{
   constructor(person) {
     super(person);
     this.taskName = "Sleeping";
-    this.howLong = 10;
+    this.howLong = random(4) + 8; //8 -> 11 hours of sleep
     this.initialDescription = " retired to " + this.person.getPronoun(true) + " quarters.";
   }
 
@@ -298,11 +298,21 @@ class SpecialistTask extends Task{
   }
   //"Botanist"
   _botanistActivity(){
-    return " watered " + this.person.getPronoun(true) + " plants.";
+    //chance to produce some provisions for the ship!
+    if (random(2) == 0){
+      return " watered " + this.person.getPronoun(true) + " plants.";
+    } else {
+      this.person.ship.provisions += random(5) + 5; //5->10
+      return " harvested some weird-looking fruit from " + this.person.getPronoun(true) + " plants, increasing the ships provisions!";
+    }
   }
   //"Storyteller"
   _storytellerActivity(){
     //-> chance to make everyone's mood better, or worse.
+    if (this.person.ship.people.length <= 1){
+      //storyteller has to tell you, the captain, their stories.
+      return " told the captain a story. Was the captain even listening?";
+    }
     var r = random(2);
     var result = "";
     var desc = "";
@@ -709,6 +719,9 @@ class TalkingTask extends PairTask {
   }
 
   describeFinal(){
+    if (!this.initiator){
+      return "";
+    }
     var string = " had a conversation with " + this.otherPerson.name + " about ";
     for (var i = 0; i < this.pairActivity.topicHistory.length; i++) {
       if ((this.pairActivity.topicHistory.length > 1) && (i == this.pairActivity.topicHistory.length - 1)) {
@@ -725,7 +738,10 @@ class TalkingTask extends PairTask {
     //1. after talking, adjust relationship
     //...
     var iName = "<i>" + this.person.name + "</i>"
-    this.person.log.push([this.person.ship.tick, iName + this.describeFinal()]);
+    var desc = this.describeFinal();
+    if (desc != ""){
+      this.person.log.push([this.person.ship.tick, iName + desc]);
+    }
   }
 }
 
@@ -898,5 +914,74 @@ class PoorHealthTask extends Task{
     } else {
       return " is starting to feel a little better.";
     }
+  }
+}
+
+
+//====================================//
+
+class DeathTask extends Task{
+  constructor(person) {
+    super(person);
+    this.taskName = "Death";
+    this.howLong = 1;
+    var cause = this.person.getCauseOfDeath();
+    this.initialDescription = " has died of " + cause + ".";
+  }
+
+  run(){
+    super.run();
+  }
+
+  taskDone() {
+    return super.taskDone();
+  }
+
+  describeFinal(){
+    return " has passed away.";
+  }
+}
+
+//====================================//
+
+//kind of like a single-person conversation
+class WonderingTask extends Task{
+  constructor(person) {
+    super(person);
+    this.taskName = "Wondering";
+    this.howLong = 2;
+    this.initialDescription = "";
+    this.finalDesc = "";
+  }
+
+  run(){
+    super.run();
+  }
+
+  taskDone() {
+    var possibleThoughts = [];
+    if (this.person.isStarving){
+      possibleThoughts.push(" thought about how hungry " + this.person.getPronoun(false) + " is.");
+    }
+    if (this.person.ship.people.length == 1){
+      possibleThoughts.push(" thought about how lonely " + this.person.getPronoun(false) + " felt.");
+    }
+    if (this.person.ship.deceased.length > 0){
+      var r = random(this.person.ship.deceased.length);
+      possibleThoughts.push(" mourned the loss of " + this.person.ship.deceased[r] + ".");
+    } else {
+      possibleThoughts.push(" wondered about the captain's mysterious past.");
+    }
+    //===============//
+    if (possibleThoughts.length <= 0){
+      this.finalDesc = " was lost in thought."; //probably won't happen.
+    } else {
+      this.finalDesc = possibleThoughts[random(possibleThoughts.length)];
+    }
+    return super.taskDone();
+  }
+
+  describeFinal(){
+    return this.finalDesc;
   }
 }
