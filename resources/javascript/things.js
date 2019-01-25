@@ -85,12 +85,13 @@ class Cargo{
 class Thing{
 
   // constructor: string, string, list of ints (indices, which correspond to all_possible_reactions array above)
-  constructor(category, what, where, observations){
+  constructor(category, what, where, observations, stat, belongsToName){
     this.all_possible_reactions = [
       this._cleanUp,
       this._observe,
       this._eat
     ]
+    this.belongsTo = belongsToName; // the NAME of a person only.
     this.category = category; // eg. painting, garbage...
     this.what = what; //eg. a more verbose name
     this.where = where;
@@ -99,6 +100,8 @@ class Thing{
     this._populateReactions();
     this.lastsFor = 10; //when lastsFor == 0, this Thing is removed from the ship automatically
     //some things can be set to last longer, of course, like certain paintings
+    this.stat = stat; //the amount to increase or decrease some attribute, depends on the category.
+    this.markedForRemoval = false;
   }
 
   //depending on the 'what', populate possibleReactions (note: with indices)
@@ -113,6 +116,7 @@ class Thing{
     } else if (this.category == "food") {
       this.possibleReactions.push(1); //can observe
       this.possibleReactions.push(2); //can eat
+      this.possibleReactions.push(2); //can eat x2 (better chance to eat.)
     } else {
       //...
     }
@@ -121,7 +125,13 @@ class Thing{
   reactToThing(person){
     if (this.possibleReactions.length > 0){
       var r = random(this.possibleReactions.length);
-      var reaction = this.all_possible_reactions[this.possibleReactions[r]](this, person); //this should == a FUNCTION
+      var belongsToName = "";
+      if (person.name == this.belongsTo){
+        belongsToName = person.getSelfPronoun();
+      } else {
+        belongsToName = this.belongsTo;
+      }
+      var reaction = this.all_possible_reactions[this.possibleReactions[r]](this, person, belongsToName);
       return reaction;
     } else {
       return "";
@@ -140,12 +150,20 @@ class Thing{
     if (this.observations == ""){
       return "";
     } else {
-      return (" " + capitalize(person.getPronoun(false)) + " examined the " + this.observations + " with interest.");
+      var string = "";
+      var randomObs = random(2);
+      if (randomObs){
+        string = " " + capitalize(person.getPronoun(false)) + " examined the " + this.observations + " with interest."
+      } else {
+        string = " The " + this.observations + " caught " + person.getPronoun(true) + " interest, and " + person.getPronoun(false) + " considered it thoughtfully.";
+      }
+      return string;
     }
   }
   //---[ REACTIONS ]---//     //t = this
   // 0. CLEANUP
   _cleanUp(t, person){
+    t.markedForRemoval = true;
     return (" " + capitalize(person.getPronoun(false)) + " picked up " + t.what + ".");
   }
   //1. OBSERVE
@@ -157,8 +175,19 @@ class Thing{
     return string;
   }
   //2. EAT
-  _eat(t, person){
-    return (" " + capitalize(person.getPronoun(false)) + " decided to eat a bit of the " + t.what + ".");
+  _eat(t, person, ownedBy){
+    person.adjustHealth(t.stat);
+    var string = " " + capitalize(person.getPronoun(false)) + " decided to eat a bit of the " + t.what + " made by " + ownedBy + ". "; //ownedBy can be 'themselves'
+    if (t.stat > 0){
+      string += "It was quite tasty. " + capitalize(person.getName()) + "'s health increased a little.";
+    } else if (t.stat < 0){
+      string += "A bad idea, because it tasted foul. " + capitalize(person.getName()) + "'s health decreased a little.";
+    } else {
+      string += "It tasted pretty good.";
+    }
+    //half the time left.
+    this.lastsFor = (this.lastsFor/2)|0; //eg. 10 -> 5 -> 2 -> 1
+    return string;
   }
 
 }

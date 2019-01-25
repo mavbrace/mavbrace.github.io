@@ -13,6 +13,13 @@ var NO_INJURIES = 0;
 var MINOR_INJURIES = 1;
 var MAJOR_INJURIES = 2; // placed in sick bay.
 
+var INITITAL_KINSHIP = 4;
+var KINSHIP_NAMES = ["bitter rival","rival","stranger","stranger",
+                    "aquaintance","aquaintance",
+                    "colleague","pal","good mate",
+                    "friend","friend","friend","good friend",
+                    "close friend","best friend"];
+
 
 //-- PERSON --//
 class Person{
@@ -72,7 +79,9 @@ class Person{
                           "EnemyShip":100,
                           "PoorHealth": 1,
                           "Death": 100,
-                          "Wondering": 1   };
+                          "Wondering": 1,
+                          "Game": 1,
+                          "Argument": 1 };
     //-> visuals
     this.visualFeatures = {"hairColour":null,
                           "skin":null,
@@ -148,6 +157,11 @@ class Person{
 
 
   //---[ GETS ]---//
+
+  getName(){
+    return "<u>" + this.name + "</u>";
+  }
+
   hasPoorHealth(){
     //in general!
     if (this.hasMajorInjury() != ""){
@@ -186,7 +200,7 @@ class Person{
 
 
   //--- RETURNS NAME -OR- IF IT'S THE SAME PERSON, RETURN "him/her/themself".
-  getName(testPerson){
+  getPlainName(testPerson){
     if (testPerson === this){
       if (this.gender == FEMALE){
         return "herself";
@@ -316,22 +330,22 @@ class Person{
     }
     var desc = "";
     if (amount <= 20){
-      return this.name + " fell, luckily suffering only a few bruises.";
+      return this.getName() + " fell, luckily suffering only a few bruises.";
     } else if (amount > 20 && amount <= 50){
       this.updateHealthIssues_Injury(MINOR_INJURIES, "broken wrist");
-      return this.name + " reported a broken wrist.";
+      return this.getName() + " reported a broken wrist.";
     } else {
       this.updateHealthIssues_Injury(MAJOR_INJURIES, "fractured skull");
-      return this.name + " was brought to the sick bay with major injuries.";
+      return this.getName() + " was brought to the sick bay with major injuries.";
     }
   }
 
 
-  //causes can be: "fire", "explosion", "fall", "projectile", "animal"
+  //causes can be: "fire", "explosion", "fall", "projectile", "animal attack"
   causeSpecificInjury(amount, cause){
     this.health -= amount;
     if (this.health < 0){
-      this.health = 0; //TODO: they're dead x_x
+      this.health = 0; //they're dead...
     }
     var desc = "";
     //========================//
@@ -342,6 +356,11 @@ class Person{
         return "few scratches";
       }
     }
+    var a = "a";
+    if (startsWithVowel(cause)){
+      var a = "an";
+    }
+    this.ship.shipHistory.push("====| REPORT |====<br>" + this.getName() + " suffered injuries due to " + a + " " + cause + ".<br>");
     //========================//
     if (amount > 20 && amount <= 50){
       var possibleInjuries = [];
@@ -380,7 +399,7 @@ class Person{
       } else if (cause == "projectile"){
         possibleInjuries.push("pierced lung","projectile lodged in the skull","punctured stomach",
                               "collection of life-threatening injuries");
-      } else if (cause == "animal"){
+      } else if (cause == "animal attack"){
         possibleInjuries.push("torn throat","collection of life-threatening injuries");
       } else {
         //something else...
@@ -479,6 +498,8 @@ class Person{
     // 12 = PoorHealthTask
     // 13 = DeathTask
     // 14 = WonderingTask
+    // 15 = GameTask
+    // 15 = ArgumentTask
     //==================================//
     this.possibleTasks = []; //list of task 'IDs'; empty and refill here...
     //-> probability list that will be generated (and picked from):
@@ -491,16 +512,18 @@ class Person{
     //1. SleepingTask: no prerequisits
     this.possibleTasks.push(1);
     probabilities.push(this.task_chances["Sleeping"]);
-    //2. ExerciseTask: no prerequisits
-    this.possibleTasks.push(2);
-    probabilities.push(this.task_chances["Exercise"]);
+    //2. ExerciseTask: can't be in poor health.
+    if (!this.hasPoorHealth()){
+      this.possibleTasks.push(2);
+      probabilities.push(this.task_chances["Exercise"]);
+    }
     //3. MeetingNewPeopleTask: ...
     if (this.knownPeopleInfo.length < this.ship.people.length - 1){
       this.possibleTasks.push(3);
       probabilities.push(this.task_chances["MeetingNewPeople"]);
     }
     //4. TalkingTask: ...
-    if (this.knownPeopleInfo.length != 0){
+    if (this.knownPeopleInfo.length > 0){
       this.possibleTasks.push(4);
       probabilities.push(this.task_chances["Talking"]);
     }
@@ -554,6 +577,16 @@ class Person{
     //14. WonderingTask
     this.possibleTasks.push(14);
     probabilities.push(this.task_chances["Wondering"]);
+    //15. GameTask
+    if (this.knownPeopleInfo.length > 0){
+      this.possibleTasks.push(15);
+      probabilities.push(this.task_chances["Game"]);
+    }
+    //16. ArgumentTask
+    if (this.knownPeopleInfo.length > 0){
+      this.possibleTasks.push(16);
+      probabilities.push(this.task_chances["Argument"]);
+    }
 
     //------------------//
     // PICK A TASK //
@@ -620,19 +653,38 @@ class Person{
       newTask = new PoorHealthTask(this);
     } else if (chosenTaskID == 13){
       newTask = new DeathTask(this);
-    } else if (chosenTaskID = 14){
+    } else if (chosenTaskID == 14){
       newTask = new WonderingTask(this);
+    } else if (chosenTaskID == 15){
+      var r = random(this.knownPeopleInfo.length);
+      var conversation_partner = this.ship.findPersonInShipByID(this.knownPeopleInfo[r][0]);
+      if (!conversation_partner) {
+        //if this happens to happen, remove that ID from knownPeopleInfo (they be dead)
+        this.knownPeopleInfo.splice(r, 1);
+      } else {
+        //playing a game with someone alive!
+        new GameTask(this, conversation_partner, true);
+      }
+    } else if (chosenTaskID == 16){
+      var r = random(this.knownPeopleInfo.length); //TODO: should be more likely to be someone you already dislike.
+      var conversation_partner = this.ship.findPersonInShipByID(this.knownPeopleInfo[r][0]);
+      if (!conversation_partner) {
+        //if this happens to happen, remove that ID from knownPeopleInfo (they be dead)
+        this.knownPeopleInfo.splice(r, 1);
+      } else {
+        //have an argument.
+        new ArgumentTask(this, conversation_partner, true);
+      }
     } else {
-      //TODO.....handle this?
       console.log("Error: no tasks chosen.");
     }
     //-----[ LOG ]-----//
     if (newTask != null && newTask.initialDescription != ""){
       if (smallTask == ""){
-        var iName = "<i>" + this.name + "</i>";
+        var iName = this.getName();
         this.log.push([this.ship.tick, iName + newTask.initialDescription]);
       } else {
-        var iName = "<i>" + this.name + "</i>";
+        var iName = this.getName();
         this.log.push([this.ship.tick, iName + newTask.initialDescription]);
       }
     }
@@ -666,7 +718,7 @@ class Person{
         this.isDead = true;
         this.health = 0;
         //---> update ship history.
-        var hist = "===[REPORT, DAY " + whatIteration + "]===<br>Sadly, " + this.name + " has died of " + this.getCauseOfDeath() + ". " + capitalize(this.getPronoun(false)) + " was given a space-burial. " + capitalize(this.getPronoun(false)) + " will be missed.<br>";
+        var hist = "===[REPORT, DAY " + whatIteration + "]===<br>Sadly, " + this.getName() + " has died of " + this.getCauseOfDeath() + ". " + capitalize(this.getPronoun(false)) + " was given a space-burial. " + capitalize(this.getPronoun(false)) + " will be missed.<br>";
         this.ship.shipHistory.push(hist);
       }
     } else {
@@ -703,5 +755,31 @@ class Person{
   }
 
   //===========================//
+
+  adjustKinship(knownPersonID, adj){
+    if (this.knownPeopleInfo.length <= 0){
+      return "";
+    }
+    if (adj == 0){
+      return "";
+    }
+    for (var i = 0; i < this.knownPeopleInfo.length; i++){
+      if (knownPersonID == this.knownPeopleInfo[i][0]){
+        this.knownPeopleInfo[i][1] += adj;
+        if (this.knownPeopleInfo[i][1] < 0){
+          this.knownPeopleInfo[i][1] = 0;
+        }
+        if (this.knownPeopleInfo[i][1] >= KINSHIP_NAMES.length){
+          this.knownPeopleInfo[i][1] = KINSHIP_NAMES.length - 1;
+        }
+        return KINSHIP_NAMES[this.knownPeopleInfo[i][1]];
+      }
+    }
+    //shouldn't reach here.
+    console.log("Error: could not adjust kinship level.");
+    return "";
+
+  }
+
 
 }

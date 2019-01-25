@@ -17,6 +17,11 @@ body {
   box-sizing: border-box;
 }
 
+u {
+  color: rgb(230,150,150);
+  text-decoration: none;
+}
+
 .upperpage {
   width: 90%;
   margin: 0 auto;

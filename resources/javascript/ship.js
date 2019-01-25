@@ -31,7 +31,6 @@ class Ship {
     this.integrity = 20; // for now, rate at which ship decays
     this.level = 0; // can work to upgrade your ship
     this.things = []; // 'things' strewn about the ship - (**'Thing' objects**)
-    //maybe add (parts): wiring, plumbing...?
     this.parts = {
       "engine": 100,
       "hull": 100,
@@ -95,15 +94,15 @@ class Ship {
   }
 
 
-  addAThing(categoryOfThing, nameOfThing, observations = "", location = ""){
+  addAThing(categoryOfThing, nameOfThing, observations = "", location = "", addStat = 0, nameOfPerson = ""){
     if (location == "") {
       //need to generate a random location
       //TODO: if medical-related, should usually be in "sick bay"
       var randomLoc = ship_locations[random(ship_locations.length)];
-      this.things.push(new Thing(categoryOfThing, nameOfThing, randomLoc, observations));
+      this.things.push(new Thing(categoryOfThing, nameOfThing, randomLoc, observations, addStat, nameOfPerson));
     } else {
       //the location is specified :)
-      this.things.push(new Thing(categoryOfThing, nameOfThing, location, observations));
+      this.things.push(new Thing(categoryOfThing, nameOfThing, location, observations, addStat, nameOfPerson));
     }
   }
 
@@ -168,7 +167,7 @@ class Ship {
     for (var i = 0; i < allParts.length; i++){
       if (this.parts[allParts[i]] < worstCondition){
         worstPart = allParts[i];
-        worstCondition = this.parts[allParts[i]]
+        worstCondition = this.parts[allParts[i]];
       }
     }
     return worstPart;
@@ -211,7 +210,7 @@ class Ship {
     //-> age;  remove thing from this.things if necessary
     for (var i = 0; i < this.things.length; i++){
       this.things[i].lastsFor -= 1;
-      if (this.things[i].lastsFor <= 0){
+      if (this.things[i].lastsFor <= 0 || this.things[i].markedForRemoval){
         //time's up: remove the item
         console.log("Removing " + this.things[i].what + " from the ship.");
         this.things.splice(i, 1);

@@ -19,7 +19,7 @@ class Task{
   taskDone() {
     // sometimes overridden
     if (this.describeFinal() != ""){
-      var iName = "<i>" + this.person.name + "</i>"
+      var iName = this.person.getName();
       this.person.log.push([this.person.ship.tick, iName + this.describeFinal()]);
     }
   }
@@ -366,7 +366,7 @@ class PaintingTask extends Task{
   taskDone() {
     //-> create a 'Thing' in the Ship
     var observation = this._aboutThePainting(); //TODO : change this up
-    this.person.ship.addAThing("painting","a painting by " + this.person.name, observation);
+    this.person.ship.addAThing("painting","a painting by " + this.person.getName(), observation);
     //-> grabbing the thing they added by referencing the last element of person.things...
     //-> then set it so it can last between 10 and 610 'days'
     this.person.ship.things[this.person.ship.things.length-1].lastsFor = random(PAINTING_LASTSFOR_MAX) + PAINTING_LASTSFOR_MIN;
@@ -391,6 +391,7 @@ class CookingTask extends Task{
     this.taskName = "Cooking";
     this.howLong = 4;
     this.initialDescription = "";
+    this.foodCreated = "";
   }
 
   run(){
@@ -402,38 +403,65 @@ class CookingTask extends Task{
     //observation format should be, for example, 'they noted the [blue and white colour] with interest'
     var typeOptions = ["treat","food"];
     var type = typeOptions[random(2)];
-    var observation = "delicious-looking " + type; //TODO : change this up
+    var success = random(5); //TODO: make this not-so-random. (0 == failure)
+    var observation = "";
+    var what = "";
+    var whatSpecific = "";
+    var stat = 0;
     //location = galley or lounge
     var galleyOrLounge = ["galley","lounge"];
-    var r = random(galleyOrLounge.length);
     if (type == "treat"){
       var r = random(2);
-      var what = "";
       if (r == 0){
-        what = "cake baked by " + this.person.name;
+        what = "chocolate cake";
+        whatSpecific = "cake";
       } else {
-        what = "pie baked by " + this.person.name;
+        what = "space-pie";
+        whatSpecific = "pie";
       }
-      this.person.ship.addAThing("food", what, observation, galleyOrLounge[r]);
-
+      this.foodCreated = " did some baking.";
+      stat = 1;
     } else {
       var r = random(3);
-      var what = "";
       if (r == 0){
-        what = "stew cooked by " + this.person.name;
+        what = "stew";
+        whatSpecific = "stew";
+        this.foodCreated = " finished cooking a big pot of stew.";
       } else if (r == 1) {
-        what = "salad assembled by " + this.person.name;
+        what = "salad";
+        whatSpecific = "salad";
+        this.foodCreated = " tossed a salad.";
       } else {
-        what = this.person.name + "'s freshly-baked space-bread";
+        what = "freshly-baked space-bread";
+        whatSpecific = "bread";
+        this.foodCreated = " pulled a freshly-baked loaf out of the oven.";
       }
-      this.person.ship.addAThing("food", what, observation, galleyOrLounge[r]);
+      stat = 2;
     }
     //Done
+    if (success == 0){
+      observation = "dubious " + whatSpecific;
+      stat = -stat; //reduces health D:
+    } else {
+      //succeeded: mediocrity and above.
+      var goodness = random(3);
+      if (goodness == 0){
+        observation = "a little odd-looking but probably edible " + type;
+        stat = stat - 1;
+      } else if (goodness == 1) {
+        observation = whatSpecific;
+      } else {
+        observation = "delicious-looking " + type;
+        stat = stat + 1;
+      }
+
+    }
+    this.person.ship.addAThing("food", what, observation, galleyOrLounge[random(galleyOrLounge.length)], stat, this.person.getName());
     return super.taskDone();
   }
 
   describeFinal(){
-    return " cooked something.";
+    return this.foodCreated;
   }
 }
 
@@ -497,7 +525,6 @@ var TOPICS_NEUTRAL = ["the threat of space pirates",
 
 class PairActivity {
   constructor() {
-
   }
 }
 
@@ -518,14 +545,17 @@ class Conversation extends PairActivity {
   //-->function to choose a topical topic
   _chooseATopic(){
     //======>>[LOTTERY]<<=======//
-    var choices = ["neutral","passion","celestialBody","destination","cargo"];
-    var lots = [1, 1, 1, 1, 1];
+    var choices = ["neutral","passion","celestialBody","destination","cargo","hunger"];
+    var lots = [1, 1, 1, 1, 1, 1];
     //~~~adjust the odds~~~//
     if (this.p0.ship.dockingPossible){
       lots[3] = 5; // increase destination-topic chance
     }
     if (this.p0.ship.craftedCargoName != ""){
       lots[4] = 2;
+    }
+    if (this.p0.isStarving || this.p1.isStarving){
+      lots[5] = 2;
     }
     //~~~~~~~~~~~~~~~~~~~~//
     var choice = lottery(lots);
@@ -558,7 +588,12 @@ class Conversation extends PairActivity {
       } else {
         return "the dust gathering in the cargo bay";
       }
-
+    } else if (choices[choice] == "hunger"){
+      if (this.p0.isStarving || this.p1.isStarving){
+        return "the bleak state of things";
+      } else {
+        return "the proper management of provisions";
+      }
     } else {
       console.log("Error when choosing topic.");
       return "black holes"; //just in case: if this comes up, though, something has gone wrong
@@ -601,9 +636,9 @@ class Conversation extends PairActivity {
     if (option == 1){
       if (allPassionsOfPerson.length > 0){
         //choose a passion at random
-        passionString = tempPerson.name + "'s love of " + allPassionsOfPerson[random(allPassionsOfPerson.length)];
+        passionString = tempPerson.getName() + "'s love of " + allPassionsOfPerson[random(allPassionsOfPerson.length)];
       } else {
-        passionString = tempPerson.name + "'s lack of hobbies"
+        passionString = tempPerson.getName() + "'s lack of hobbies"
       }
     } else {
       passionString = allPassions[random(allPassions.length)];
@@ -625,7 +660,7 @@ class Conversation extends PairActivity {
       planetString += "the planet of " + this.p0.galaxy.planets[r].name;
     } else {
       //HOME PLANET
-      planetString += this.p0.name + "'s home planet of " + this.p0.originPlanet.name;
+      planetString += this.p0.getName() + "'s home planet of " + this.p0.originPlanet.name;
     }
     return planetString;
   }
@@ -699,6 +734,13 @@ class PairTask extends Task {
     this.pairActivity.run(this);
   }
 
+  adjustBothKinshipLevels(adjustment){
+    //adjust both, grab the desc from only one though.
+    var relationship = this.person.adjustKinship(this.otherPerson.id, adjustment);
+    this.otherPerson.adjustKinship(this.person.id, adjustment);
+    return relationship;
+  }
+
 }
 
 class TalkingTask extends PairTask {
@@ -718,11 +760,21 @@ class TalkingTask extends PairTask {
     }
   }
 
+  taskDone(){
+    //1. after talking, adjust relationship
+    //...
+    var iName = this.person.getName();
+    var desc = this.describeFinal();
+    if (desc != ""){
+      this.person.log.push([this.person.ship.tick, iName + desc]);
+    }
+  }
+
   describeFinal(){
     if (!this.initiator){
       return "";
     }
-    var string = " had a conversation with " + this.otherPerson.name + " about ";
+    var string = " had a conversation with " + this.otherPerson.getName() + " about ";
     for (var i = 0; i < this.pairActivity.topicHistory.length; i++) {
       if ((this.pairActivity.topicHistory.length > 1) && (i == this.pairActivity.topicHistory.length - 1)) {
         string += ", and ";
@@ -731,18 +783,26 @@ class TalkingTask extends PairTask {
       }
       string += this.pairActivity.topicHistory[i];
     }
-    return string + ".";
+    string += ".";
+    //-----ADJUST KINSHIP LEVEL------//
+    //--> random, for now.
+    var kinshipAdjuster = random(3);
+    var relationship = "";
+    if (kinshipAdjuster == 0){
+      //no change.
+      relationship = this.adjustBothKinshipLevels(0);
+    } else {
+      //more likely to increase kinship (2/3)
+      relationship = this.adjustBothKinshipLevels(1);
+    }
+    //---> if their relationship has changed, add it to the string!
+    if (relationship != ""){
+      string += " [" + this.person.getName() + " and " + this.otherPerson.getName() + " are " + relationship + "s].";
+    }
+    //-------------------------------//
+    return string;
   }
 
-  taskDone(){
-    //1. after talking, adjust relationship
-    //...
-    var iName = "<i>" + this.person.name + "</i>"
-    var desc = this.describeFinal();
-    if (desc != ""){
-      this.person.log.push([this.person.ship.tick, iName + desc]);
-    }
-  }
 }
 
 // -------------------------------------- //
@@ -760,7 +820,7 @@ class MeetingNewPeopleTask extends PairTask {
       var picked = false;
       while (!picked) {
         var r = random(this.person.ship.people.length);
-        if (this.person.ship.people[r] == this.person) {
+        if (this.person.ship.people[r] === this.person) {
           //ie can't meet yourself
           continue;
         } else {
@@ -796,26 +856,172 @@ class MeetingNewPeopleTask extends PairTask {
     super.run();
   }
 
-  describeFinal(){
-    //TODO: probably put this check somewhere else..
-    if (this.otherPerson != null){
-      var iName = "<i>" + this.otherPerson.name + "</i>"
-      return " met " + iName + " for the first time.";
-    } else {
-      return " met... no one?";
-    }
-  }
   taskDone(){
     if (this.otherPerson != null){
-      this.person.knownPeopleInfo.push([this.otherPerson.id,1,1]);
-      var iName = "<i>" + this.person.name + "</i>"
+      var kinshipLevel = INITITAL_KINSHIP;
+      this.person.knownPeopleInfo.push([this.otherPerson.id, kinshipLevel, 1]);
+      var iName = this.person.getName();
       this.person.log.push([this.person.ship.tick, iName + this.describeFinal()]);
     }
 
   }
 
+  describeFinal(){
+    if (this.otherPerson != null){
+      var iName = this.otherPerson.getName();
+      return " met " + iName + " for the first time.";
+    } else {
+      return " met... no one?";
+    }
+  }
+
 }
 
+// -------------------------------------- //
+
+//2-player games :)
+class GameTask extends PairTask {
+  constructor(person, otherPerson, initiator){
+    super(person, otherPerson, initiator);
+    this.taskName = "Game";
+    this.howLong = 4;
+    this.initialDescription = "";
+    this.initiate();
+  }
+
+  initiate() {
+    if (this.initiator) {
+      var otherPT = new GameTask(this.otherPerson, this.person, false); //HERE
+      var pairAct = new Conversation(this, otherPT, this.person, this.otherPerson); // TODO: Change this from conversation to something else
+      super.initiate(otherPT, pairAct);
+    }
+  }
+
+  run(){
+    super.run();
+  }
+
+  taskDone(){
+    if (this.otherPerson != null){
+      var iName = this.person.getName();
+      var desc = this.describeFinal();
+      if (desc != ""){
+        this.person.log.push([this.person.ship.tick, iName + desc]);
+      }
+    }
+  }
+
+  describeFinal(){
+    if (!this.initiator){
+      return "";
+    }
+    var possible_games = ["go-fish","checkers","Cosmical Confrontation II","Cosmical Confrontation Classic","tic-tac-toe"];
+    var game = possible_games[random(possible_games.length)];
+    var string = " played a game of " + game + " with " + this.otherPerson.getName() + ".";
+    var result = random(3);
+    if (result == 0){
+      string += " The winner was " + this.otherPerson.getName() + ".";
+      this.otherPerson.adjustMood(1); //gets a little happier.
+    } else if (result == 1){
+      string += " The game ended in a tie.";
+    } else {
+      string += " The winner was " + this.person.getName() + ".";
+      this.person.adjustMood(1);
+    }
+    //-----ADJUST KINSHIP LEVEL------//
+    //--> random, for now.
+    var kinshipAdjuster = random(10);
+    var relationship = "";
+    if (kinshipAdjuster == 0){
+      //bad
+      relationship = this.adjustBothKinshipLevels(-1);
+      string += " " + this.person.getName() + " accused " + this.otherPerson.getName() + " of cheating.";
+    } else if (kinshipAdjuster <= 5){
+      //no change.
+      relationship = this.adjustBothKinshipLevels(0);
+    } else {
+      //most likely!
+      relationship = this.adjustBothKinshipLevels(1);
+    }
+    //---> if their relationship has changed, add it to the string!
+    if (relationship != ""){
+      string += " [" + this.person.getName() + " and " + this.otherPerson.getName() + " are " + relationship + "s].";
+    }
+    //-------------------------------//
+    return string;
+  }
+
+}
+
+//-----------------------------//
+
+
+//Have an argument D:<
+class ArgumentTask extends PairTask {
+  constructor(person, otherPerson, initiator){
+    super(person, otherPerson, initiator);
+    this.taskName = "Argument";
+    this.howLong = 3;
+    this.initialDescription = "";
+    this.initiate();
+  }
+
+  initiate() {
+    if (this.initiator) {
+      var otherPT = new ArgumentTask(this.otherPerson, this.person, false); //HERE
+      var pairAct = new Conversation(this, otherPT, this.person, this.otherPerson); // TODO: Change this from conversation to something else
+      super.initiate(otherPT, pairAct);
+    }
+  }
+
+  run(){
+    super.run();
+  }
+
+  taskDone(){
+    if (this.otherPerson != null){
+      var iName = this.person.getName();
+      var desc = this.describeFinal();
+      if (desc != ""){
+        this.person.log.push([this.person.ship.tick, iName + desc]);
+      }
+    }
+  }
+
+  describeFinal(){
+    if (!this.initiator){
+      return "";
+    }
+    var string = " had an argument with " + this.otherPerson.getName() + ".";
+    //-----ADJUST KINSHIP LEVEL------//
+    //--> random, for now.
+    var kinshipAdjuster = random(6);
+    var relationship = "";
+    if (kinshipAdjuster == 0){
+      //good! Rarest.
+      relationship = this.adjustBothKinshipLevels(1);
+      string += " It ended amicably.";
+    } else if (kinshipAdjuster > 0 && kinshipAdjuster <= 3){
+      //no change.
+      relationship = this.adjustBothKinshipLevels(0);
+      string += " They agreed to disagree.";
+    } else {
+      //most likely to be bad.
+      relationship = this.adjustBothKinshipLevels(-1);
+      string += " Offense was taken.";
+    }
+    //---> if their relationship has changed, add it to the string!
+    if (relationship != ""){
+      string += " [" + this.person.getName() + " and " + this.otherPerson.getName() + " are " + relationship + "s].";
+    }
+    //-------------------------------//
+    return string;
+  }
+
+}
+
+
+//-----------------------------//
 //-----------------------------//
 
 
@@ -847,28 +1053,32 @@ class PoorHealthTask extends Task{
   constructor(person) {
     super(person);
     this.taskName = "Poor Health";
-    this.howLong = 5;
+    this.howLong = 10;
     this.getsTreatment = false;
+    this.injuryDesc = ""; //injury, or illness.
     this.initialDescription = this._getInitDesc();
     this.finalDesc = "";
   }
 
   _getInitDesc(){
     if (this.person.hasMajorInjury() != ""){
+      this.injuryDesc = this.person.hasMajorInjury();
       this.getsTreatment = true;
-      return " is laying in bed in the sick bay.";
+      return " is laying in bed in the sick bay with a " + this.injuryDesc;
     }
 
     if (this.person.hasMinorInjury() != ""){
+      this.injuryDesc = this.person.hasMinorInjury();
       this.getsTreatment = true;
       if (random(2) == 0){
-        return " is healing from a " + this.person.hasMinorInjury() + ".";
+        return " is healing from a " + this.injuryDesc + ".";
       } else {
-        return " complained about " + this.person.getPronoun(true) + " " + this.person.hasMinorInjury() + ".";
+        return " complained about " + this.person.getPronoun(true) + " " + this.injuryDesc + ".";
       }
     }
 
     if (this.person.isSick()){
+      this.injuryDesc = this.person.isSick();
       this.getsTreatment = true;
       return "...";
     }
@@ -895,14 +1105,20 @@ class PoorHealthTask extends Task{
       var chance_to_heal = this.person.health + skill;
       var chance_to_get_worse = 1;
       if (chance(chance_to_heal, 100)){
-        this.person.updateHealthIssues_Injury(NO_INJURIES, "");
+        if (this.person.hasMajorInjury()){
+          //upgrade.
+          this.person.updateHealthIssues_Injury(MINOR_INJURIES, this.injuryDesc);
+          this.finalDesc = "'s " + this.injuryDesc + " is healing well.";
+        } else {
+          this.person.updateHealthIssues_Injury(NO_INJURIES, "");
+          this.finalDesc = " is fully healed! Wonderful.";
+        }
         this.person.adjustHealth(20);
-        this.finalDesc = " is fully healed!";
       } else if (chance(chance_to_get_worse, 100)){
         this.person.adjustHealth(-10);
         this.finalDesc = "'s condition has deteriorated."
       } else {
-        this.finalDesc = "'s condition is stable.";
+        this.finalDesc = " hopes " + this.person.getPronoun(true) + " " + this.injuryDesc + " heals soon.";
       }
     }
     return super.taskDone();
@@ -969,9 +1185,19 @@ class WonderingTask extends Task{
     if (this.person.ship.deceased.length > 0){
       var r = random(this.person.ship.deceased.length);
       possibleThoughts.push(" mourned the loss of " + this.person.ship.deceased[r] + ".");
-    } else {
-      possibleThoughts.push(" wondered about the captain's mysterious past.");
     }
+    //--other topics--//
+    var otherThoughts = [" wondered about the captain's mysterious past.",
+                          " thought about what motivated " + this.person.getPronoun(false) + ". " + capitalize(this.person.motive) + ", was that still important?",
+                          " wondered if the captain could, in fact, hear the crew's thoughts.",
+                          " pondered the rumours of ghosts in the lower hallways.",
+                          " puzzled over the unfamiliar technology of The " + this.person.ship.shipName + ".",
+                          " reflected on the events of the past few days.",
+                          " mulled over " + this.person.getPronoun(true) + " options.",
+                          " contemplated the magnificent view out the ship's windows.",
+                          " dwelled on " + this.person.getPronoun(true) + " past."];
+    var other_r = random(otherThoughts.length);
+    possibleThoughts.push(otherThoughts[other_r]);
     //===============//
     if (possibleThoughts.length <= 0){
       this.finalDesc = " was lost in thought."; //probably won't happen.

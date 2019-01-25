@@ -204,7 +204,7 @@ class Game {
     //--> ADD LOG TO HTML <--//
     for (var i = 0; i < shipLog.length; i++){
       var tickLabel = "<strong>" + this.tickToClockTime(i) + "</strong>";
-      logText_Element.innerHTML += tickLabel + "  " + shipLog[i] + "<br>";
+      logText_Element.innerHTML += tickLabel + "  " + shipLog[i] + "<br><br>";
     }
     //----------------------//
 

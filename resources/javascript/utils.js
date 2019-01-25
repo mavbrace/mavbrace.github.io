@@ -99,15 +99,28 @@ function nameMaker(originOfName, gender){
   return name;
 }
 
+
+function startsWithVowel(word){
+  var f = word.charAt(0);
+  if (f == "a" || f == "o" || f == "u" || f == "i" || f == "e" || f == "A" || f == "O" || f == "U" || f == "I" || f == "E"){
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
 //modulo so it works over negatives as well...
 Number.prototype.mod = function(n) {
   return ((this % n) + n) % n;
 }
 
+
 //normal random: return random from 0 -> n-1 (TODO: replace all with this)
 function random(n){
   return Math.floor(Math.random() * n);
 }
+
 
 //the chance is 'n out of total' (n normally will be 1) (also, total > n)
 //returns true if n
