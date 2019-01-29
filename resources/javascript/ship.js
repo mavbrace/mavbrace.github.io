@@ -46,7 +46,12 @@ class Ship {
     this.enemyShipEvent = false;
     this.battleHistory = [];
 
-    this.cargo = []; //a list of Cargo objects (3 (MAX_CARGO) allowed at a time)
+    this.cargo = []; //stuff in the cargo hold.
+    this.wheat = 0; //unprocessed wheat. Bought.
+    this.flour = 0; //processed wheat. For sellling.
+
+    this.inCombiner = [null, null]; //combine these items. TWO ITEMS MAX.
+
     this.craftedCargoName = "";
     this.craftedCargoWorth = 0;
     this.cargoOffer = []; // [whatCargo, offer] -1 means an offer on the crafted cargo

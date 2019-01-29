@@ -40,27 +40,38 @@
             <p id="shipHistory"></p>
           </div>
           <div id="tradeDiv" style="display: none;">
-            <p> Technologies for purchase: </p>
-            <button id = "tradeItem0"> item 0 </button>
-            <button id = "tradeItem1"> item 1 </button>
-            <button id = "tradeItem2"> item 2 </button>
-            <p id = "purchaseItemText"> </p>
-            <button id = "purchaseTradeItem"> BUY </button>
-          </div>
-          <div id="sellingDiv" style="display: none;">
-            <img id = "buyerImage" src="resources/images/buyer1.png">
-            <p id="sellingText"> Sure, I'll buy your stuff. </p>
-            <button id="acceptSaleButton">ACCEPT</button>
-          </div>
-          <div id = "shipCargoDiv">
-            <div id="cargoBayDiv">
-              <p id="cargoText" style="color:black;">...</p>
-              <p id="shipCraftedCargoText" style="color:black;">...</p>
+            <p style="margin:0px;"> GENERAL STORE </p>
+            <div id="commodityDivA">
+              <p id="commodityAText" style="margin:0px; padding-bottom:5px;"> commodity </p>
+              <button id="commodityAButton"> BUSHEL </button>
             </div>
-            <button id="cargoCombineButton">COMBINE</button>
-            <button id ="swapAroundButton">SWAP AROUND</button>
-            <p id="shipCargoText"> CARGO: empty </p>
+            <div id="commodityDivB">
+              <p id="commodityBText" style="margin:0px; padding-bottom:5px;"> commodity </p>
+              <button id="commodityBButton"> SELL 10 </button>
+            </div>
+            <div id="purchasableItemsDiv">
+              <button id="leftPurchaseButton"> < </button>
+              <button id="purchaseCargoButton"> BUY 1 </button>
+              <button id="rightPurchaseButton"> > </button>
+            </div>
+            <p id = "confirmPurchaseText"> </p>
+            <button id = "purchaseTradeItem"> CONFIRM </button>
           </div>
+
+          <div id = "shipCargoDiv">
+            <div id="inventoryDiv">
+              <button id="leftInventoryButton"> < </button>
+              <p id="inventoryText"> -- empty -- </p>
+              <button id="rightInventoryButton"> > </button>
+              <button id="addToCombinerButton"> ADD </button>
+            </div>
+            <p id="combinerText" style="text-align:center;"> ______ + ______ </p>
+            <div style="position: relative; text-align: center;">
+              <button id="cargoCombineButton">COMBINE</button>
+              <p id="combinationText"> ... </p>
+            </div>
+          </div>
+
         </div>
 
 
@@ -93,10 +104,11 @@
           </div>
           <div id = "controlPanel" class = "controlPanelDiv">
             <p id="controlPanelText">DESTINATION: no destination set</p>
-            <button id="toggleButton">DOCK</button>
             <button id="goButton">PROGRESS</button>
-            <button id="newDestButton">MAP</button>
             <p id = "controlPanelNotifs"> >>press progress to begin </p>
+            <button id="toggleButton">DOCK</button>
+            <button id="newDestButton">MAP</button>
+            <button id="recipeButton">TECH</button>
           </div>
         </div>
 
@@ -104,6 +116,7 @@
         <div class = "logcolumn">
           <p id = "rightColumnTitle" style="margin:7px;"> SHIP'S EYE </p>
           <p id="log" style="margin:7px;">...</p>
+
           <div id = "strangers" style = "display:none;">
             <button id = "strangerButton0"> stranger </button>
             <button id = "strangerButton1"> stranger </button>
@@ -116,6 +129,13 @@
               <button id="motiveButton2" style="margin:10px">not sure</button>
             </div>
           </div>
+
+          <div id="sellingDiv" style="display: none;">
+            <img id = "buyerImage" src="resources/images/buyer1.png">
+            <p id="vendorText"> Sure, I'll buy your stuff. </p>
+            <button id="acceptSaleButton">ACCEPT</button>
+          </div>
+
         </div>
 
     </div>
@@ -142,6 +162,23 @@
         <button id="modalGo">SET AS DESTINATION</button>
       </div>
     </div>
+
+
+    <div id = "recipemodal" class="modal">
+      <div id = "recipecontent" class = "recipe-content">
+        <span class="close">&times;</span>
+        <p> TECHNOLOGY </p>
+      </div>
+      <div style="background-color:rgb(30,32,40); padding:10px; margin:50px;">
+        <p style="line-height:1.2;margin-left:10px;" id="recipeTextA"> ... </p>
+        <p style="line-height:1.2;margin-left:30px;" id="recipeTextA_full"> ... </p>
+        <p style="line-height:1.2;margin-left:10px;" id="recipeTextB"> ... </p>
+        <p style="line-height:1.2;margin-left:30px;" id="recipeTextB_full"> ... </p>
+        <p style="line-height:1.2;margin-left:10px;" id="recipeTextC"> ... </p>
+        <p style="line-height:1.2;margin-left:30px;" id="recipeTextC_full"> ... </p>
+      </div>
+    </div>
+
 
     <p id="debugText"> ... </p>
 

@@ -16,13 +16,20 @@ class Game {
                           "enemy ship":0  };
     //--- possibilities ---//
     this.possibleJourney = ""; //A Journey as set in the MODAL, not the official journey!!!
-    this.possiblePurchasedTradeItem = null; // when docked, a trade item you are considering buying.
+    //---CARGO etc---//
+    this.browseCargoIndex = 0; //current viewed cargo-for-sale.
+    this.possibleItemToBuy = null; // when docked, a trade item you are considering buying.
+    this.browseInventoryIndex = 0; //current viewed inventory item.
+
     this.possibleCrewMember = null; //A Person, ie a stranger, when docked, you are considering hiring.
     //the possibleCrewMember (Person object) has a hiringStage.
     //-- crew slideshow --//
     this.slideshowIndex = -1; //corresponds to index of ship.people: -1 means nobody is shown.
     //--travelling...//
     this.isProgressing = false; //for the PROGRESS/GO button
+    //--GAME STAGE--//
+    this.game_stage = 0;
+
   }
 
   tickToClockTime(tick){
@@ -65,19 +72,21 @@ class Game {
     // clear some html elements
     shipStatusText_Element.innerHTML = ""
     debugText.innerHTML = "";
-    shipCargoSymbols.innerHTML = "";
     logText_Element.innerHTML = "";
     shipHistoryText_Element.innerHTML = "";
     journeyText_Element.innerHTML = "";
-    shipCargoCraftedName.innerHTML = "";
-    shipCargoMessage.innerHTML = "";
+    combinationMessage.innerHTML = "...";
     toggleButton.innerHTML = "DOCK";
+    recipeTextA.innerHTML = "";
+    recipeTextB.innerHTML = "";
+    recipeTextC.innerHTML = "";
     //hide all these things
     shipViewVisibilityOn(true);
     tradeDivVisibilityOn(false);
     strangersVisibilityOn(false);
     toggleButton.style.display = "none";
     newDestButton.style.display = "none";
+    recipeButton.style.display = "none";
     //just hide the character slideshow.
     document.getElementById("frontside").style.display = "none";
     moreCrewInfoBtn.style.display = "none";
@@ -152,10 +161,16 @@ class Game {
       //->GENERATE THE LOG BY GATHERING, FOR EACH PERSON, THEIR PERSONAL LOGS
       for (var i = 0; i < this.ship.people.length; i++){
         var personalLog = this.ship.people[i].log;
-        //TODO: clear each person's old logs so they don't build up forever!!
+        if (personalLog.length > TICK_BUNDLE){
+          //for now, getting rid of anything but today (in the future, maybe keep one day back?)
+          var n = personalLog.length - TICK_BUNDLE; //find how much of the beginning to trim off (limiting to 24 elements, which is actually somewhat arbitrary)
+          personalLog.splice(0, n);
+          this.ship.people[i].log = personalLog; //just in case.
+        }
         for (var j = 0; j < personalLog.length; j++){
           shipLog[personalLog[j][0] - (TICK_BUNDLE * this.iteration)] += personalLog[j][1] + " ";
         }
+
       }
       //---finished updating ship's log---//
     }
@@ -243,7 +258,9 @@ class Game {
     //....update journey info
     journeyText_Element.innerHTML = "FUNDS: " + this.ship.funds + " units | ";
     journeyText_Element.innerHTML += "PROVISIONS: " + this.ship.provisions + " | ";
-    journeyText_Element.innerHTML += "FUEL: " + this.ship.fuel + "%<br>";
+    journeyText_Element.innerHTML += "FUEL: " + this.ship.fuel + "% | ";
+    journeyText_Element.innerHTML += "WHEAT: " + this.ship.wheat + " bushels | ";
+    journeyText_Element.innerHTML += "FLOUR: " + this.ship.flour + " cups<br>";
     journeyText_Element.innerHTML += "DAY: " + this.iteration + "<br>";
     controlPanelText_Element.innerHTML = "DESTINATION: ";
     if (this.ship.currentJourney != null){
@@ -329,16 +346,6 @@ class Game {
       //...
     }
     this.peopleInStation = tempPeople;
-
-    //-----//
-    //generate available trade items ('cargo'):
-    // THREE items
-    this.ship.whichCelestialBody.tradeItemsAvailable = []; //for now, just clear old
-    var tradeItemButtons = [tradeItemButton0, tradeItemButton1, tradeItemButton2];
-    for (var i = 0; i < 3; i++){
-      this.ship.whichCelestialBody.tradeItemsAvailable.push(new Cargo);
-      tradeItemButtons[i].innerHTML = this.ship.whichCelestialBody.tradeItemsAvailable[i].symbol;
-    }
 
   }
 

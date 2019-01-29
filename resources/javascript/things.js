@@ -1,84 +1,74 @@
 // ---[THINGS: Cargo and Thing]---//
 
-//note: C_SYMBOLS are ordered by worth.
-var C_SYMBOLS = ["[]", "#", "||", "-", "*", ".", "=", "o", ":", "~",
-                "|", "=", "==", "_"];
+//just names...
+var possible_cargos = [["flimmer","shun","darmerger"],
+                      ["hummer","sharlar","routerrum"],
+                      ["humdinger","thingimibob","blibbleblob"],
+                      ["rallot","sherver","nall","tello"],
+                      ["shertubble","mumbler","hortiolo"]];
 
-class Cargo{
+//just names... unused so far.
+var secondary_possible_cargos = ["sharder","glum","fiddle"];
+//just names...
+var final_tech_names = ["mucker","sharl","dubs","hams"];
+
+
+class Cargo {
   constructor(){
-    this.symbol = "";
+    this.cost = 0;
     this.name = "";
-    this.worth = 0;
-    this._generateScrap(); //SETS SYMBOL, NAME and WORTH
+  }
+}
+
+class FinalTech extends Cargo{
+  constructor(galax){
+    super();
+    this.name = final_tech_names[random(final_tech_names.length)]; //probably should make this not-so-random, since there will be repeats otherwise...
+    this.created = false; //doesn't 'exist' until true.
+    this.ingredients = this._chooseIngredients(galax); //list of tech that goes into creating this.
+    console.log("FINAL TECH: " + this.name + ".... INGREDIENTS: \n-" + this.ingredients[0].name + "\n-" + this.ingredients[1].name + "\n");
+
+    var keys_temp = Object.keys(extra_stuff_for_sale);
+    this.extraBit = keys_temp[random(keys_temp.length)];//somethin' else.
   }
 
-  _generateScrap(){
-    //-----GENERATE A SCRAP----//
-    //-> 5 symbols (including containers)
-    var max_chars = 5;  //can adjust this freely, but 5 is a nice number
-    var minCenter = max_chars % 2;  //1 for odd, 2 for even
-    //type 1: symmetric
-    var index = random(C_SYMBOLS.length)
-    this.worth += index;
-    var centerPiece = C_SYMBOLS[index];
-    if (minCenter == 2){
-      centerPiece += centerPiece; //make it double
-      this.worth += index;
-    }
-    var scrap = this._recursiveSymmetry((max_chars/2)|0, centerPiece);
-    //type 2: asymmetric
-    //...
-    //set the symbol
-    this.symbol = scrap;
-    //get the proper name by using the WORTH
-    //-> NOTE: not random. Taking each digit of this.worth, we choose an element from each array.
-    //-> eg. worth = 21.  Therefore options[0][2] + options[1][1]
-    var options = [["Energy ","Micro ","Re-","Multi-","Ham","Sum","Shed","Hey","Oy","Last"],
-                ["Supply","Sorter","Tammuld","Shoe","Sand","Hurr","Bar","Crabble","Snub","Laster"],
-                ["(v0)","(v1)","(v2)","(v3)","(v4)","(v5)","(v6)","(v7)","(v8)","(v9)"]];
-    var w = "" + this.worth; //1. convert to string
-    var foundName = "";
-    for (var i = 0; i < 3; i++){
-      if (w.charAt(i) != ""){
-        var index = parseInt(w.charAt(i));
-        if (!isNaN(index) && options[i].length >= 9){
-          foundName += options[i][index];
-        } else {
-          console.log("Error: couldn't parse int to find scrap name, or options is missing elements.")
-        }
-      }
-    }
+  _chooseIngredients(galax){
+    //go through the planets and stations, and choose (1) Tech from a Station, and (1) Tech from a Planet.
+    var station = galax.spaceStations[random(galax.spaceStations.length)];
+    var techA = station.techForSale[random(station.techForSale.length)];
 
-    //set the name
-    this.name = foundName;
+    var planet = galax.planets[random(galax.planets.length)];
+    var techB = planet.techForSale[random(planet.techForSale.length)];
+
+    return [techA, techB];
   }
 
-  _recursiveSymmetry(num, c){
-    if (num <= 0){
-      return c;
-    }
-    var index = random(C_SYMBOLS.length)
-    this.worth += index;
-    var bookend = C_SYMBOLS[index];
-    return bookend + this._recursiveSymmetry(num - 1, c) + bookend;
+  getRecipe(){
+    return "" + this.ingredients[0].name + " + " + this.ingredients[1].name + " + " + this.extraBit;
   }
+}
 
+class Tech extends Cargo{
+  constructor(associatedID, level){
+    super();
+    this.level = level;
+    this.associatedID = associatedID % possible_cargos.length;
+    this.type = "tech";
+    this.index = random(possible_cargos[this.associatedID].length);
+    this.name = possible_cargos[this.associatedID][this.index];
+    this.cost = random(700) + 500; //500->1200 per item.
+  }
+}
 
+class Commodity extends Cargo{
+  constructor(){
+    super();
+    this.type = "commodity";
+    this.name = "wheat";
+    this.cost = random(100) + 100; //100->200 per bushel.
+  }
 
 }
-/*
-<#~#>   : 0
-||-||   : 1
-[*_*]   : 2
-~~!~~   : 3
-=[.]=   : 4
->>>>|   : 5
-|<<<<   : 6
-::o::   : 7
-[???]   : 8
-
->>>>|=[.]=|<<<<  5-4-6
-*/
 
 
 //things so far: painting, garbage, book

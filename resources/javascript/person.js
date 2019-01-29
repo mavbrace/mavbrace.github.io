@@ -322,6 +322,30 @@ class Person{
   }
 
 
+  //adjustment of energy. Can be -n, 0, or n.
+  adjustEnergy(adjustment){
+    this.energy_level += adjustment;
+    if (this.energy_level > 100){
+      this.energy_level = 100;
+    }
+    if (this.energy_level < 0){
+      this.energy_level = 0;
+    }
+  }
+
+
+  //adjustment of fitness. Can be -n, 0, or n.
+  adjustFitness(adjustment){
+    this.fitness += adjustment;
+    if (this.fitness > 100){
+      this.fitness = 100;
+    }
+    if (this.fitness < 0){
+      this.fitness = 0;
+    }
+  }
+
+
   //input: 'amount' should be from 1 -> ~90
   causeRandomInjury(amount){
     this.health -= amount;
@@ -513,7 +537,7 @@ class Person{
     this.possibleTasks.push(1);
     probabilities.push(this.task_chances["Sleeping"]);
     //2. ExerciseTask: can't be in poor health.
-    if (!this.hasPoorHealth()){
+    if (!this.hasPoorHealth() && this.energy_level > EXHAUSTION_LEVEL){
       this.possibleTasks.push(2);
       probabilities.push(this.task_chances["Exercise"]);
     }
@@ -699,10 +723,12 @@ class Person{
     //1. hungriness.
     if (this.ship.provisions <= 0){
       this.isStarving = true;
-      this.health -= HEALTH_LOST_FROM_STARVATION;
+      this.adjustHealth(-HEALTH_LOST_FROM_STARVATION);
+      this.adjustEnergy(-ENERGY_LOST_FROM_STARVATION);
     } else {
       this.isStarving = false;
     }
+    //============================//
     //if not dead... maybe die.
     if (this.health <= 0 && !(this.isDead)){
       //uh oh.

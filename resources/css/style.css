@@ -1,7 +1,7 @@
 html {
   background-color: rgb(20,10,10);
   font-family: 'VT323', sans-serif;
-  font-size: 1.1em;
+  font-size: 1.2em;
   color: white;
 }
 
@@ -216,28 +216,93 @@ input {
   background-color: black;
 }
 
+#commodityDivA {
+  padding: 5px;
+  display: inline-block;
+  margin: 0px;
+  background-color: rgb(60, 60, 60);
+  border-radius: 5px;
+}
+
+#commodityDivB {
+  padding: 5px;
+  display: inline-block;
+  margin-bottom:10px;
+  background-color: rgb(60, 60, 60);
+  border-radius: 5px;
+}
+
+#purchasableItemsDiv {
+  height: 50px;
+  position: relative;
+  width:100%;
+  text-align: center;
+  background-color: rgb(60, 60, 60);
+  border-radius: 5px;
+}
+
+#leftPurchaseButton {
+  left: 0;
+  position: absolute;
+  top: 20%;
+  padding: 5px;
+}
+
+#purchaseCargoButton {
+  width: 60%;
+  display: block;
+  margin-left: 20%;
+  position: absolute;
+  top: 20%;
+  padding: 5px;
+}
+
+#rightPurchaseButton {
+  right: 0;
+  position: absolute;
+  top: 20%;
+  padding: 5px;
+}
+
+
+/*====[ cargo / combining ]====*/
 #shipCargoDiv {
   position: absolute;
   bottom: 0;
   width: 100%;
   background-color: rgb(170, 2, 10);
-  padding: 10px;
+  border: 2px solid black;
 }
 
-#cargoBayDiv {
+#shipCargoDiv button{
+  margin: 5px;
+}
+
+/*inventory*/
+#inventoryDiv {
+  width: 100%;
+  background-color: rgb(90, 2, 10);
+}
+
+#leftInventoryButton {
   float: left;
-  margin-left: 10px;
-  margin-right: 10px;
-  border: 1px solid black;
-  border-radius: 10px;
-  width: 50%;
-  height: 100px;
-  background-color: white;
-  text-align: center;
+  width: 20px;
 }
 
-#shipCargoText {
+#inventoryText {
+  float: left;
+  width: 120px;
 }
+
+#rightInventoryButton {
+  float: left;
+  width: 20px;
+}
+
+#combinationText {
+  position: relative;
+}
+/*=============================*/
 
 .centercolumn {
   position: relative;
@@ -335,7 +400,7 @@ input {
   position: absolute;
   bottom: 0;
   width: 100%;
-  height: 150px;
+  height: 175px;
   background-color: black;
   border: 6px solid white;
   border-top-right-radius: 15px;
@@ -343,14 +408,18 @@ input {
   text-align: center;
 }
 
-#toggleButton {
-  padding: 2px;
-}
 #goButton {
-  padding: 10px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  padding: 5px;
+  margin-bottom: 5px;
+}
+#toggleButton {
 }
 #newDestButton{
-  padding: 2px;
+}
+#recipeButton{
 }
 
 .logcolumn {
@@ -386,8 +455,8 @@ input {
   border-radius: 15px;
 }
 
-/* MODAL STUFF */
-
+/*========== MODAL STUFF ===========*/
+/*===================================*/
 .modal {
   display: none;
   position: fixed;
@@ -425,7 +494,7 @@ input {
   height: 300px;
   margin-left: 35px;
   margin-top: 10px;
-  background-image: url("../images/background.png");
+  background-image: url("../images/background.jpg");
   border: 3px ridge rgb(50, 51, 51);
 }
 
@@ -438,7 +507,7 @@ input {
   width: 15px;
 }
 
-/*---stations are diamond-shaped---*/
+/*~stations are diamond-shaped~*/
 .destinationButtons_stations {
   background-color: rgb(180, 180, 180);
   border: 2px solid rgb(250, 250, 250);
@@ -477,10 +546,38 @@ input {
   padding: 5px;
 }
 
+/*============================================*/
+/*============[ MODEL 2: RECIPE]==============*/
+
+.recipe-content {
+  text-align: center;
+  background-color: rgb(14, 12, 12);
+  padding: 10px;
+  width: 100%;
+  height: 5px;
+}
+
+mark {
+  text-transform: uppercase;
+  background-color: yellow;
+  color: black;
+}
+
+/*============================================*/
+/*============================================*/
+
 button {
   cursor: pointer;
   font-family: 'VT323', sans-serif;
   font-size: 1em;
   background-color: white;
+  padding: 2px;
+}
+
+button:hover {
+  cursor: pointer;
+  font-family: 'VT323', sans-serif;
+  font-size: 1em;
+  background-color: rgb(190,170,170);
   padding: 2px;
 }

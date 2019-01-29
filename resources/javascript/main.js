@@ -51,33 +51,36 @@ goButton.onclick = function(){
       goButton.innerHTML = "PROGRESS";
       toggleButton.style.display = "inline";
       newDestButton.style.display = "inline";
+      recipeButton.style.display = "inline";
       document.getElementById("frontside").style.display = "block";
       moreCrewInfoBtn.style.display = "block";
       //--> go...
       game.go();
     } else {
-    //--testing:animation---//
-    var anim = document.getElementById("shipAnimDiv");
-    anim.style.animation = "slide 2s linear infinite";
-    if (!NO_DELAY){
-      window.setTimeout(andProgress,DELAY);
-    } else {
-      //just go there immediately (debug only)
-      andProgress();
+      //===TRAVEL: animation===//
+      var anim = document.getElementById("shipAnimDiv");
+      anim.style.animation = "slide 2s linear infinite";
+      if (!NO_DELAY){
+        goButton.disabled = true;
+        goButton.innerHTML = "TRAVELLING";
+        window.setTimeout(andProgress,DELAY);
+      } else {
+        //just go there immediately (debug only)
+        andProgress();
+      }
+      //----------------------//
     }
-
-    //----------------------//
-    }
-
-
   } else {
     updateControlPanelNotifs("");
     game.spaceStationGo();
   }
 }
 
+//====after animation (travel delay)=====//
 function andProgress(){
   //--testing:animation---//
+  goButton.innerHTML = "PROGRESS"; //reset this.
+  goButton.disabled = false; //enable button once more.
   var anim = document.getElementById("shipAnimDiv");
   anim.style.animation = "slide 60s linear infinite";
   //----------------------//
@@ -250,10 +253,11 @@ toggleButton.onclick = function(){
   //for the moment, toggles between space station and the main view
   //implement the changes: for now, right column
   if (game.view == MAIN_VIEW){
-    //-> STATION VIEW or EVIL VIEW
-    //===[ SHIFT TO STATION VIEW ]===// (ie DOCK)
+    //-> STATION VIEW or EVIL VIEW <--//
     if (game.ship.whichCelestialBody != null && game.ship.dockingPossible){
+
       if (game.ship.whichCelestialBody.type == "evil"){
+        //===[ 1) EVIL ]===//
         updateControlPanelNotifs("approaching...");
         game.view = SPACE_STATION_VIEW;
         game.ship.inFlight = false;
@@ -268,9 +272,9 @@ toggleButton.onclick = function(){
         //-> display the evilDiv
         evilDiv = document.getElementById("evilDiv");
         evilDiv.style.display = "block";
-        //--------TODO....this----//
+
       } else {
-        //NORMAL SPACE-STATION VIEW
+        //===[ 2) NORMAL SPACE-STATION VIEW ]===//
         updateControlPanelNotifs("docking...");
         game.view = SPACE_STATION_VIEW;
         game.ship.inFlight = false;
@@ -279,8 +283,8 @@ toggleButton.onclick = function(){
         toggleButton.innerHTML = "TAKE OFF";
         logText_Element.innerHTML = "...";
         rightColumnTitle_Element.innerHTML = "OBSERVATIONS";
-        purchaseItemText.innerHTML = "...";
-        updateBuyerText();
+        confirmPurchaseText.innerHTML = "...";
+        updateVendorText();
         //------------//
         shipViewVisibilityOn(false);
         tradeDivVisibilityOn(true);
@@ -295,6 +299,7 @@ toggleButton.onclick = function(){
       updateControlPanelNotifs("docking impossible");
     }
   } else {
+    //=====[ MAIN (INFLIGHT) VIEW ]=====//
     shiftToMainView("taking off...");
   }
 }
@@ -316,30 +321,6 @@ function shiftToMainView(message){
   game.go();
 }
 
-
-function updateBuyerText(){
-  var str = "";
-  if (game.ship.cargo.length > 0){
-    if (game.ship.craftedCargoWorth != 0){
-      //if there's a crafted item:
-      var p = game.ship.whichCelestialBody.sellPercentage;
-      var price = (game.ship.craftedCargoWorth * (p/100))|0;
-      str = "I see you have a " + game.ship.craftedCargoName + ".";
-      str += " I'll give you " + price + " for it.";
-      game.ship.cargoOffer = [-1, price];
-    } else {
-      var r = random(game.ship.cargo.length);
-      var p = game.ship.whichCelestialBody.sellPercentage;
-      var price = (game.ship.cargo[r].worth * (p/100))|0;
-      str = "I can give you " + price + " for that ";
-      str += game.ship.cargo[r].name + " you have.";
-      game.ship.cargoOffer = [r, price];
-    }
-  } else {
-    str = "-out to lunch-";
-  }
-  sellingText.innerHTML = str;
-}
 
 //OPEN modal
 newDestButton.onclick = function() {
@@ -382,12 +363,18 @@ span.onclick = function() {
 //closing modal: if clicked outside of modal, exit
 window.onclick = function(event){
   //console.log("clickety : " + event.target.id);
-  var inside = (event.target.parentElement.id == "mainmodal"
+  var insideMainModal = (event.target.parentElement.id == "mainmodal"
               || event.target.parentElement.id == "modalcontent"
               || event.target.id == "mainmodal"
               || event.target.id == "newDestButton");
-  if ((modal.style.display == 'block') && (!inside)) {
+  var insideRecipeModal = (event.target.parentElement.id == "recipemodal"
+              || event.target.id == "mainmodal"
+              || event.target.id == "recipeButton");
+  if ((modal.style.display == 'block') && (!insideMainModal)) {
     modal.style.display = "none";
+  }
+  if ((recipemodal.style.display == 'block') && (!insideRecipeModal)) {
+    recipemodal.style.display = "none";
   }
 }
 
@@ -448,116 +435,151 @@ function handleCelestialBodyClicks(index, type){
 
 }
 //-----------------[ TRADE STUFF ]-----------------//
-//--> if you click on an item, reveal text and ok button (TODO)
-tradeItemButton0.onclick = function(){
-  handleTradeItemClicks(0);
-}
-tradeItemButton1.onclick = function(){
-  handleTradeItemClicks(1);
-}
-tradeItemButton2.onclick = function(){
-  handleTradeItemClicks(2);
-}
 
-function handleTradeItemClicks(index){
-  purchaseItemText.innerHTML = "PURCHASE ITEM?";
-  if (game.ship.whichCelestialBody != null){
-    game.possiblePurchasedTradeItem = game.ship.whichCelestialBody.tradeItemsAvailable[index];
-    purchaseItemText.innerHTML += " " + game.ship.whichCelestialBody.tradeItemsAvailable[index].name;
-    var p = game.ship.whichCelestialBody.sellPercentage;
-    var price = (game.ship.whichCelestialBody.tradeItemsAvailable[index].worth * (p/100))|0;
-    purchaseItemText.innerHTML += " [ " + price + " units ]";
-    console.log("worth..." + game.ship.whichCelestialBody.tradeItemsAvailable[index].worth);
+
+//~~~~~~~~~~~~~~~~~~~~~~~~//
+
+//--[BROWSE CARGOS (specifically TECH) FOR SALE]--//
+leftPurchaseButton.onclick = function(){
+  var numCargoForSale = game.ship.whichCelestialBody.techForSale.length;
+  game.browseCargoIndex = (game.browseCargoIndex - 1).mod(numCargoForSale);
+  game.possibleItemToBuy = game.ship.whichCelestialBody.techForSale[game.browseCargoIndex];
+  cargoPurchaseButton.innerHTML = game.possibleItemToBuy.name;
+}
+//--[BROWSE CARGOS FOR SALE]--//
+rightPurchaseButton.onclick = function(){
+  var numCargoForSale = game.ship.whichCelestialBody.techForSale.length;
+  game.browseCargoIndex = (game.browseCargoIndex + 1).mod(numCargoForSale);
+  game.possibleItemToBuy = game.ship.whichCelestialBody.techForSale[game.browseCargoIndex];
+  cargoPurchaseButton.innerHTML = game.possibleItemToBuy.name;
+}
+//--a click here expresses intention to buy the cargo. (Must confirm to actually buy)
+cargoPurchaseButton.onclick = function(){
+  if (!game.possibleItemToBuy){
+    confirmPurchaseText.innerHTML = "...";
   } else {
-    console.log("Error printing out item.");
-    purchaseItemText.innerHTML += " -null-";
+    confirmPurchaseText.innerHTML = "Buy the " + game.possibleItemToBuy.name + "? Price: " + game.possibleItemToBuy.cost + " units.";
   }
 }
 
-purchaseTradeItemButton.onclick = function(){
-  //-> have you selected a part?
-  if (game.possiblePurchasedTradeItem == null){
-    purchaseItemText.innerHTML = "Please select a shipment to purchase.";
-    return;
-  }
-  //-> is there room?
-  if (game.ship.cargo.length >= MAX_CARGO){
-    purchaseItemText.innerHTML = "Looks like you don't have room for that.";
-    return;
-  }
-  //-> finally, do you have enough money?
-  var p = game.ship.whichCelestialBody.sellPercentage;
-  var price = (game.possiblePurchasedTradeItem.worth * (p/100))|0;
-  if (game.ship.funds < price){
-    purchaseItemText.innerHTML = "Seems you can't afford that."
-    return;
-  }
-  //--- SUCCESS ---//
-  game.ship.funds -= price;
-  game.ship.cargo.push(game.possiblePurchasedTradeItem);
-  purchaseItemText.innerHTML = "Thank you. Please come again.";
-  //-> UPDATE RELEVANT HTML <-/
-  game.updateJourneyInfoHTML();
-  updateBuyerText();
-  drawCargo();
-  //---------------//
+commodityAButton.onclick = function(){
+  var comm = game.ship.whichCelestialBody.commoditiesForSale[0]; //for now just the first.
+  game.possibleItemToBuy = comm;
+  confirmPurchaseText.innerHTML = "Buy bushel of " + comm.name + "? Price: " + game.possibleItemToBuy.cost + " units.";
 }
 
-acceptSaleButton.onclick = function(){
-  if (game.ship.cargoOffer.length > 0){
-    var str = "";
-    if (game.ship.cargoOffer[0] == -1){
-      str = "sold.";
-      game.ship.cargo = [];
-    } else {
-      str = "sold.";
-      game.ship.cargo.splice(game.ship.cargoOffer[0], 1);
-    }
-    game.ship.funds += game.ship.cargoOffer[1];
-    game.updateJourneyInfoHTML();
-    game.ship.clearCraftedCargoInfo();
-    shipCargoMessage.innerHTML = "";
-    shipCargoCraftedName.innerHTML = "";
-    updateBuyerText();
-    drawCargo();
+commodityBButton.onclick = function(){
+  //TODO..
+}
+
+confirmPurchaseButton.onclick = function(){
+  if (!game.possibleItemToBuy){
+    confirmPurchaseText.innerHTML = "Please choose something to buy.";
+    return;
+  }
+  //-> check if you have enough funds!
+  if (game.ship.funds < game.possibleItemToBuy.cost){
+    confirmPurchaseText.innerHTML = "Whoops, you can't afford that.";
+    return;
+  }
+  //-> if good, subtract money from your funds.
+  game.ship.funds -= game.possibleItemToBuy.cost;
+  //-> continue on...
+  confirmPurchaseText.innerHTML = "Thank you! " + capitalize(game.possibleItemToBuy.name) + " purchased.";
+  if (game.possibleItemToBuy.type == "tech"){
+    game.ship.cargo.push(game.possibleItemToBuy);
+    //display that last thing you added (inventory):
+    inventoryText.innerHTML = game.ship.cargo[game.ship.cargo.length-1].name;
+  } else if (game.possibleItemToBuy.type == "commodity"){
+    game.ship.wheat++;
+  }
+  //--> at last, update ship information.
+  game.updateJourneyInfoHTML(); //update bushel count / funds
+}
+
+//~~~~~~~~~~~inventory stuff~~~~~~~~~~~~~//
+
+//display cargo!
+leftInventoryButton.onclick = function(){
+  if (game.ship.cargo.length <= 0){
+    inventoryText.innerHTML = "-- empty --";
+    return;
+  }
+  game.browseInventoryIndex = (game.browseInventoryIndex - 1).mod(game.ship.cargo.length);
+  inventoryText.innerHTML = game.ship.cargo[game.browseInventoryIndex].name;
+}
+rightInventoryButton.onclick = function(){
+  if (game.ship.cargo.length <= 0){
+    inventoryText.innerHTML = "-- empty --";
+    return;
+  }
+  game.browseInventoryIndex = (game.browseInventoryIndex + 1).mod(game.ship.cargo.length);
+  inventoryText.innerHTML = game.ship.cargo[game.browseInventoryIndex].name;
+}
+
+//=====[ add item in inventory to COMBINER (fusedevice) ]=====//
+addToCombinerButton.onclick = function(){
+  if (game.ship.cargo.length <= 0){
+    return;
+  }
+  combinerText.innerHTML = "";
+  //pop and unshift.
+  game.ship.inCombiner.unshift(game.ship.cargo[game.browseInventoryIndex]); //add element to beginning
+  game.ship.inCombiner.pop(); //remove last element
+  //===PRINT===//
+  var first = "";
+  var second = "";
+  if (game.ship.inCombiner[0] == null){
+    first = "________";
   } else {
-    sellingText.innerHTML = "-out to lunch-";
+    first = game.ship.inCombiner[0].name;
   }
+  if (game.ship.inCombiner[1] == null){
+    second = "________";
+  } else {
+    second = game.ship.inCombiner[1].name;
+  }
+  combinerText.innerHTML = first + " + " + second;
 }
 
-//TODO: this.
+//----[ ATTEMPT TO COMBINE ITEMS ]----//
 cargoCombineButton.onclick = function(){
-  if (game.ship.cargo.length < MAX_CARGO){
-    shipCargoMessage.innerHTML = "-need " + MAX_CARGO + " parts to combine-";
+  if (!game.ship.inCombiner[0] || !game.ship.inCombiner[1]){
+    combinationText.innerHTML = "Need 2 items to combine!";
   } else {
-    shipCargoMessage.innerHTML = "COMBINING...";
-    game.ship.setCraftedCargoInfo();
-    shipCargoMessage.innerHTML += "<br>Created a " + game.ship.craftedCargoName;
-    shipCargoCraftedName.innerHTML = game.ship.craftedCargoName;
-    updateBuyerText();
-    console.log("CODE: "  + game.ship.cargo[0].worth + "-" + game.ship.cargo[1].worth + "-" + game.ship.cargo[2].worth);
+    combinationText.innerHTML = "Wow, combined!";
   }
 }
 
-//TODO: and this.
-swapAroundButton.onclick = function(){
-  //re-arrange order of cargo parts (the list is shifted up and around)
-  var reOrderedCargo = [];
-  for (var i = 0; i < game.ship.cargo.length; i++){
-    var shiftedIndex = (i + 1) % game.ship.cargo.length;
-    reOrderedCargo.push(game.ship.cargo[shiftedIndex]);
-  }
-  game.ship.cargo = reOrderedCargo;
-  drawCargo();
+//~~~~~~~~~~~~~~~~~~~~~~~~//
+//~~~~~~~~~~~~~~~~~~~~~~~~//
 
+function updateVendorText(){
+  var str = "";
+  var buttonStr = "";
+  var game_stage = 0;
+  str = game.ship.whichCelestialBody.vendor.getGreetingDialogue(game.game_stage);
+  buttonStr = game.ship.whichCelestialBody.vendor.getYourGreeting(game.game_stage);
+
+  vendorButton.innerHTML = buttonStr;
+  vendorText.innerHTML = str;
 }
 
-function drawCargo(){
-  shipCargoSymbols.innerHTML = "";
-  for (var i = 0; i < game.ship.cargo.length; i++){
-    shipCargoSymbols.innerHTML += game.ship.cargo[i].symbol + "<br>";
+//--> conversation with the vendor.
+vendorButton.onclick = function(){
+  var str = "";
+  str = game.ship.whichCelestialBody.vendor.getNextDialogue(game.game_stage);
+  if (game.ship.whichCelestialBody.vendor.dialogueAllDone()){
+    game.game_stage++;
   }
+  //get rid of this later:
+  game.ship.funds += 100;
+  //----------//
+  vendorText.innerHTML = str;
+  game.updateJourneyInfoHTML();
 }
+
+//----------------------------------//
 //----------------------------------//
 
 //---SLIDESHOW BUTTONS (CREWMEMBERS)
@@ -651,6 +673,21 @@ evilInteractionButton.onclick = function(){
   // shift back to main / inflight view
   shiftToMainView("Retreating...");
 }
+
+//----------------------------------//
+
+recipeButton.onclick = function(){
+  //update the content of the modal, anytime you open it.
+  var recipeTexts = [recipeTextA, recipeTextB, recipeTextC];
+  var recipeTexts_full = [recipeTextA_full, recipeTextB_full, recipeTextC_full];
+  for (var i = 0; i < game.galaxy.finalTech.length; i++){
+    recipeTexts[i].innerHTML = "<mark>" + game.galaxy.finalTech[i].name + "</mark>";
+    recipeTexts[i].innerHTML += "<br>";
+    recipeTexts_full[i].innerHTML = game.galaxy.finalTech[i].getRecipe() + "<br>";
+  }
+  recipemodal.style.display = "block";
+}
+
 
 //----------------------------------//
 

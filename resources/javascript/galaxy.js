@@ -32,17 +32,26 @@ class Galaxy {
       this.factions.push(new Faction());
     }
     //-----//
+    var overallID = 0;
     this.spaceStations = [];
     for (var i = 0; i < NUM_SPACE_STATIONS; i++){
       this.spaceStations.push(new SpaceStation(this._randomLocInGalaxy(),
-                                        i, this.factions[i]));
+                                        i, this.factions[i], overallID));
+      overallID += i;
     }
     //-----//
     this.planets = []; //planet IDs are the indices
     for (var i = 0; i < NUM_PLANETS; i++){
-      this.planets.push(new Planet(this._randomLocInGalaxy(), i));
+      this.planets.push(new Planet(this._randomLocInGalaxy(), i, overallID));
+      overallID += i;
     }
     this.evil = new Evil(this._randomLocInGalaxy());
+    //=====//
+    //make the FinalTech,finally (3 of them, for now)
+    this.finalTech = [];
+    for (var i = 0; i < 3; i++){
+      this.finalTech.push(new FinalTech(this)); //each is made up of 2 normal Techs.
+    }
   }
 
   _randomLocInGalaxy(){
@@ -111,21 +120,89 @@ class Faction {
 }
 
 //======================//
+var vendor_names = ["Asho","Dell","Zoll","Tam","Werl","Nam","Hart","Shells","Fasto"];
+var extra_stuff_for_sale = { "sawdust": 0,
+                              "oil": 0,
+                              "laser-cutter": 0,
+                              "glue": 0,
+                              "grease": 0,
+                              "acid": 0  };
+class Vendor {
+  constructor(stationID){
+    this.vendorID = stationID;
+    this.name = vendor_names[stationID % vendor_names.length];
+    var keys_temp = Object.keys(extra_stuff_for_sale);
+    this.extraStuffForSale = keys_temp[stationID % extra_stuff_for_sale];
+  }
+
+  //input n is what -stage- of the game you're at.
+  getGreetingDialogue(stage){
+    if (stage == 0){
+      //-beginning stage-//
+      return "Name's " + this.name + ".";
+    } else if (stage == 1){
+      //-middle stage-//
+      return "You want a cookbook? I have so many of these things... so it's free.";
+    } else {
+      //-end stage-//
+      return "AGGGGHHHHHHH!";
+    }
+  }
+
+  //to put on the button... (matches this.getGreetingDialogue())
+  getYourGreeting(stage){
+    if (stage == 0){
+      //-beginning stage-//
+      return "Hello.";
+    } else if (stage == 1){
+      //-middle stage-//
+      return "Uh, sure!";
+    } else {
+      //-end stage-//
+      return "Uh... AGGGHHH?";
+    }
+  }
+
+  getNextDialogue(stage){
+    if (stage == 0){
+      //-beginning stage-//
+      return "Just telling you my name.";
+    } else if (stage == 1){
+      //-middle stage-//
+      return "Alright. There you go.<br>[You learnt a new recipe!]";
+    } else {
+      //-end stage-//
+      return "...ACK!";
+    }
+  }
+
+  //TODO....
+  dialogueAllDone(){
+    return true;
+  }
+
+}
+
+//======================//
 //--superclass for planets and space stations
 class CelestialObject {
-  constructor(coords){
+  constructor(coords, overallID){
+    this.overallID = overallID;
     this.coords = coords;
     this.type = "";
     this.tradeItemsAvailable = []; //items you can buy for TRADE
     this.buyPercentage = 80 + random(40); // percentage of cargo.worth
     this.sellPercentage = this.buyPercentage; // percentage of cargo.worth
+    this.techForSale = [new Tech(overallID,0), new Tech(overallID,0), new Tech(overallID,0)];
+    this.commoditiesForSale = [new Commodity(), new Commodity()]; //1 is available at a time.
+    this.vendor = new Vendor(overallID); //vendor belonging to this station/planet.
   }
 }
 
 //------PLANET--------//
 class Planet extends CelestialObject {
-  constructor(coords, indexID){
-    super(coords);
+  constructor(coords, indexID, overallID){
+    super(coords, overallID);
     this.name = this._planetNameMaker();
     this.type = "planet";
     this.indexID = indexID;
@@ -146,13 +223,12 @@ class Planet extends CelestialObject {
 //---created automatically with the creation of the Galaxy
 //--> faction is a Faction object
 class SpaceStation extends CelestialObject {
-  constructor(coords, num, faction){
-    super(coords);
+  constructor(coords, overallID, faction){
+    super(coords, overallID);
     this.faction = faction;
     //name has a three digit id:
     this.name = "Space Station " + random(10) + random(10) + random(10);
     this.type = "station";
-    this.num = num; //unused
   }
 }
 
@@ -160,7 +236,7 @@ class SpaceStation extends CelestialObject {
 //-> one of these things, whatever they end up being
 class Evil extends CelestialObject {
   constructor(coords){
-    super(coords);
+    super(coords, 0);
     this.name = "[ THE EVIL ]";
     this.type = "evil";
     this.health = 100;

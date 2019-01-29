@@ -181,19 +181,44 @@ var modalcontent = document.getElementById("modalcontent");
 //this is the span that closes the modal
 var span = document.getElementsByClassName("close")[0];
 
+
+//==[ MODAL 2: RECIPES ]==//
+var recipeButton = document.getElementById("recipeButton");
+var recipemodal = document.getElementById("recipemodal");
+var recipeTextA = document.getElementById("recipeTextA");
+var recipeTextA_full = document.getElementById("recipeTextA_full");
+var recipeTextB = document.getElementById("recipeTextB");
+var recipeTextB_full = document.getElementById("recipeTextB_full");
+var recipeTextC = document.getElementById("recipeTextC");
+var recipeTextC_full = document.getElementById("recipeTextC_full");
+
+//========================//
+
+
 //--[TRADE ITEMS STUFF]--//
-var tradeItemButton0 = document.querySelector('#tradeItem0');
-var tradeItemButton1 = document.querySelector('#tradeItem1');
-var tradeItemButton2 = document.querySelector('#tradeItem2');
-var purchaseItemText = document.querySelector('#purchaseItemText');
-var purchaseTradeItemButton = document.querySelector('#purchaseTradeItem');
-var sellingText = document.querySelector('#sellingText');
-var acceptSaleButton = document.querySelector('#acceptSaleButton');
-var shipCargoMessage = document.querySelector('#shipCargoText');
-var shipCargoCraftedName = document.querySelector('#shipCraftedCargoText');
-var shipCargoSymbols = document.querySelector('#cargoText');
+
+var leftPurchaseButton = document.querySelector('#leftPurchaseButton');
+var rightPurchaseButton = document.querySelector('#rightPurchaseButton');
+var cargoPurchaseButton = document.querySelector('#purchaseCargoButton');
+
+var commodityAButton = document.querySelector('#commodityAButton');//buy
+var commodityBButton = document.querySelector('#commodityBButton');//sell
+
+var confirmPurchaseText = document.querySelector('#confirmPurchaseText');
+var confirmPurchaseButton = document.querySelector('#purchaseTradeItem');
+var vendorText = document.querySelector('#vendorText');
+var vendorButton = document.querySelector('#acceptSaleButton');
+
+//--> INVENTORY!!!
+var leftInventoryButton = document.querySelector('#leftInventoryButton');
+var inventoryText = document.querySelector('#inventoryText');
+var rightInventoryButton = document.querySelector('#rightInventoryButton');
+var addToCombinerButton = document.querySelector('#addToCombinerButton');
+var combinerText = document.querySelector('#combinerText');
+
+var combinationMessage = document.querySelector('#combinationText');
 var cargoCombineButton = document.querySelector('#cargoCombineButton');
-var swapAroundButton = document.querySelector('#swapAroundButton');
+//------------------------//
 
 //--> hide or reveal SHIP INFO VIEW div
 function shipViewVisibilityOn(reveal){

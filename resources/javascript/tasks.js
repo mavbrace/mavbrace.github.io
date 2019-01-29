@@ -45,19 +45,12 @@ class ExerciseTask extends Task{
   run(){
     super.run();
     if (this.person.passions["fitness"] == true){
-      this.person.fitness += 2;
+      this.person.adjustFitness(2);
     } else if (this.notSuccessful == false){  // ie 'if successful'
-      this.person.fitness += 1;
+      this.person.adjustFitness(1);
     } //- otherwise, fitness does not increase
     //decrease energy_level
-    this.person.energy_level -= 1;
-    if (this.person.energy_level < 0){
-      this.person.energy_level = 0;
-    }
-    //enforce upper limit of fitness
-    if (this.person.fitness > 100){
-      this.person.fitness = 100;
-    }
+    this.person.adjustEnergy(-1);
   }
 
   taskDone() {
@@ -121,10 +114,7 @@ class SleepingTask extends Task{
   }
 
   run(){
-    this.person.energy_level += 1;
-    if (this.person.energy_level > 100){
-      this.person.energy_level = 100;
-    }
+    this.person.adjustEnergy(1);
     super.run();
   }
 
@@ -166,7 +156,7 @@ class NavigatorTask extends Task{
 
   run(){
     super.run();
-    this.person.energy_level -= 1;
+    this.person.adjustEnergy(-1);
     this.success = this.success + 10; //obviously change this in the future.
   }
 
@@ -194,7 +184,7 @@ class EngineerTask extends Task{
   run(){
     super.run();
     this.person.ship.repair(this.partToFix);
-    this.person.energy_level -= 1;
+    this.person.adjustEnergy(-1);
   }
 
   taskDone() {
@@ -238,7 +228,7 @@ class SpecialistTask extends Task{
 
   run(){
     super.run();
-    this.person.energy_level -= 1;
+    this.person.adjustEnergy(-1);
   }
 
   taskDone() {
@@ -1064,7 +1054,7 @@ class PoorHealthTask extends Task{
     if (this.person.hasMajorInjury() != ""){
       this.injuryDesc = this.person.hasMajorInjury();
       this.getsTreatment = true;
-      return " is laying in bed in the sick bay with a " + this.injuryDesc;
+      return " is laying in bed in the sick bay with a " + this.injuryDesc + ".";
     }
 
     if (this.person.hasMinorInjury() != ""){
@@ -1188,7 +1178,6 @@ class WonderingTask extends Task{
     }
     //--other topics--//
     var otherThoughts = [" wondered about the captain's mysterious past.",
-                          " thought about what motivated " + this.person.getPronoun(false) + ". " + capitalize(this.person.motive) + ", was that still important?",
                           " wondered if the captain could, in fact, hear the crew's thoughts.",
                           " pondered the rumours of ghosts in the lower hallways.",
                           " puzzled over the unfamiliar technology of The " + this.person.ship.shipName + ".",
