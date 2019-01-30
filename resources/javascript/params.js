@@ -5,9 +5,9 @@
 //3. constants
 //-----------------------------------//
 //----------> 0.debug <-----------//
-var SKIP_INTRO = true; //for GAME: false
-var NO_DELAY = true; //for GAME: false;
-var SHOW_DEBUG_HTML = true; //for GAME: false;
+var SKIP_INTRO = false; //for GAME: false
+var NO_DELAY = false; //for GAME: false;
+var SHOW_DEBUG_HTML = false; //for GAME: false;
 //....
 var PASSIONS_ALLOWED = true; //(default = true) (false means nobody is assigned passions from the start)
 var SINGLE_ACTIONS_ONLY = false; //(default = false) (true turns off paired tasks)
@@ -29,8 +29,8 @@ var MAX_CARGO = 3;
 //--> These parameters should be fine to adjust however you like, within reason
 //--galaxy--//
 //--people (includes from main)----//
-var DELAY = 500;
-var NUMBER_OF_INIT_PEOPLE = 4; //FOR GAME: 0
+var DELAY = 400;
+var NUMBER_OF_INIT_PEOPLE = 0; //FOR GAME: 0
 var MAX_CREW = 12; //max people in your ship.
 var STARTER_FITNESS_VALUE_MAX = 10; // therefore fitness will be a random value between 0 and ...MAX - 1
 //==== ship ====//

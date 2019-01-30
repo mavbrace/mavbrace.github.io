@@ -255,6 +255,7 @@ input {
   position: absolute;
   top: 20%;
   padding: 5px;
+  text-transform: uppercase;
 }
 
 #rightPurchaseButton {
@@ -455,6 +456,16 @@ input {
   border-radius: 15px;
 }
 
+.strangerBtns {
+  padding:0px;
+  display:inline;
+  width:40px;
+  height:38px;
+  border-radius: 55%;
+  border-color: 1px solid black;
+  background-color: black;
+}
+
 /*========== MODAL STUFF ===========*/
 /*===================================*/
 .modal {
@@ -566,12 +577,26 @@ mark {
 /*============================================*/
 /*============================================*/
 
+input:focus {
+  outline: 0;
+  background-color: red;
+}
+
+input:hover {
+  outline: 0;
+  background-color: red;
+}
+
 button {
   cursor: pointer;
   font-family: 'VT323', sans-serif;
   font-size: 1em;
   background-color: white;
   padding: 2px;
+}
+
+button:focus {
+  outline: 0;
 }
 
 button:hover {

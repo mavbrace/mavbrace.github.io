@@ -49,8 +49,7 @@ class Ship {
     this.cargo = []; //stuff in the cargo hold.
     this.wheat = 0; //unprocessed wheat. Bought.
     this.flour = 0; //processed wheat. For sellling.
-
-    this.inCombiner = [null, null]; //combine these items. TWO ITEMS MAX.
+    this.combiner = [null, null]; //combine these items. TWO ITEMS MAX.
 
     this.craftedCargoName = "";
     this.craftedCargoWorth = 0;

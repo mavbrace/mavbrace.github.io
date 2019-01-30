@@ -28,7 +28,7 @@ class Game {
     //--travelling...//
     this.isProgressing = false; //for the PROGRESS/GO button
     //--GAME STAGE--//
-    this.game_stage = 0;
+    this.game_stage = -1; //pre-game.
 
   }
 
@@ -80,6 +80,9 @@ class Game {
     recipeTextA.innerHTML = "";
     recipeTextB.innerHTML = "";
     recipeTextC.innerHTML = "";
+    recipeTextA_full.innerHTML = "";
+    recipeTextB_full.innerHTML = "";
+    recipeTextC_full.innerHTML = "";
     //hide all these things
     shipViewVisibilityOn(true);
     tradeDivVisibilityOn(false);
@@ -331,6 +334,13 @@ class Game {
     }
     updateControlPanelNotifs("docked at " + this.ship.whichCelestialBody.name);
 
+    if (!this.ship.whichCelestialBody.discovered){
+      this.ship.whichCelestialBody.discovered = true;
+      this.game_stage++;
+    }
+    vendorButton.disabled = false;
+    updateVendorText();
+
     warningsText_Element.innerHTML = ""; //NOTE: get rid of this later.
     logText_Element.innerHTML = M_HIRING;
     if (this.ship.people <= 0){
@@ -530,7 +540,7 @@ class Game {
       }
     }
     //finally, add an overlay so it looks like a crt screen :)
-    crewContext.drawImage(crtImage, 0, 0);
+    //crewContext.drawImage(crtImage, 0, 0);
 
   }
 

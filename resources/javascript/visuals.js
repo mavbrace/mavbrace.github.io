@@ -98,7 +98,7 @@ masc_images["clothingOutline"][2].src = "resources/images/clothingOutline_05.png
 var fem_images = {"hairOutline": [[new Image(), new Image(), new Image()]],
                   "upperFace": [new Image(), new Image(), new Image()],
                   "faceOutline": [new Image()],
-                  "clothingOutline": [new Image(), new Image()]  };
+                  "clothingOutline": [new Image(), new Image(), new Image(), new Image()]  };
 //--> add sources
 for (var i = 0; i < 3; i++){
   fem_images["hairOutline"][0][i].src = "resources/images/hairOutline" +
@@ -110,6 +110,8 @@ fem_images["upperFace"][2].src = "resources/images/upperFace_04.png";
 fem_images["faceOutline"][0].src = "resources/images/faceOutline_02.png";
 fem_images["clothingOutline"][0].src = "resources/images/clothingOutline_01.png";
 fem_images["clothingOutline"][1].src = "resources/images/clothingOutline_03.png";
+fem_images["clothingOutline"][2].src = "resources/images/clothingOutline_06.png";
+fem_images["clothingOutline"][3].src = "resources/images/clothingOutline_08.png";
 
 //---[ EITHER / OTHER ]---//
 //--> init
@@ -119,9 +121,9 @@ var either_images = { "hairColour": [[new Image(), new Image(), new Image()],
                                       [new Image(), new Image(), new Image()]],
                       "hairOutline": [[new Image(), new Image(), new Image()]],
                       "lowerFace": [new Image(), new Image(), new Image(), new Image()],
-                      "upperFace": [new Image(), new Image()],
+                      "upperFace": [new Image(), new Image(), new Image(), new Image(), new Image()],
                       "faceOutline": [new Image(), new Image()],
-                      "clothingOutline": [new Image()]  };
+                      "clothingOutline": [new Image(), new Image(), new Image()]  };
 //--> add sources
 for (var i = 0; i < 4; i++){
   for (var j = 0; j < 3; j++){
@@ -139,9 +141,15 @@ either_images["lowerFace"][2].src = "resources/images/lowerFace_02.png";
 either_images["lowerFace"][3].src = "resources/images/lowerFace_03.png";
 either_images["upperFace"][0].src = "resources/images/upperFace_05.png";
 either_images["upperFace"][1].src = "resources/images/upperFace_06.png";
+either_images["upperFace"][2].src = "resources/images/upperFace_07.png";
+either_images["upperFace"][3].src = "resources/images/upperFace_08.png";
+either_images["upperFace"][4].src = "resources/images/upperFace_09.png";
 either_images["faceOutline"][0].src = "resources/images/faceOutline_00.png";
 either_images["faceOutline"][1].src = "resources/images/faceOutline_04.png";
 either_images["clothingOutline"][0].src = "resources/images/clothingOutline_00.png";
+either_images["clothingOutline"][1].src = "resources/images/clothingOutline_07.png";
+either_images["clothingOutline"][2].src = "resources/images/clothingOutline_09.png";
+
 //=========//
 //crewMemberImg....
 var leftSlideshowButton = document.querySelector('#leftSlideshowButton');
@@ -218,6 +226,7 @@ var combinerText = document.querySelector('#combinerText');
 
 var combinationMessage = document.querySelector('#combinationText');
 var cargoCombineButton = document.querySelector('#cargoCombineButton');
+var cargoEmptyButton = document.querySelector('#cargoEmptyButton');
 //------------------------//
 
 //--> hide or reveal SHIP INFO VIEW div

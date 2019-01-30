@@ -133,15 +133,17 @@ class Vendor {
     this.name = vendor_names[stationID % vendor_names.length];
     var keys_temp = Object.keys(extra_stuff_for_sale);
     this.extraStuffForSale = keys_temp[stationID % extra_stuff_for_sale];
+    this.gaveRecipe = false;
   }
 
   //input n is what -stage- of the game you're at.
   getGreetingDialogue(stage){
-    if (stage == 0){
+    this.gaveRecipe = false; //reset this.
+    if (stage <= 0){
       //-beginning stage-//
       return "Name's " + this.name + ".";
-    } else if (stage == 1){
-      //-middle stage-//
+    } else if (stage == 1 || stage == 2 || stage == 3){
+      //-middle stage: find 3 cookbooks//
       return "You want a cookbook? I have so many of these things... so it's free.";
     } else {
       //-end stage-//
@@ -151,11 +153,11 @@ class Vendor {
 
   //to put on the button... (matches this.getGreetingDialogue())
   getYourGreeting(stage){
-    if (stage == 0){
+    if (stage <= 0){
       //-beginning stage-//
       return "Hello.";
-    } else if (stage == 1){
-      //-middle stage-//
+    } else if (stage == 1 || stage == 2 || stage == 3){
+      //-middle 3 stages: find 3 cookbooks-//
       return "Uh, sure!";
     } else {
       //-end stage-//
@@ -164,11 +166,12 @@ class Vendor {
   }
 
   getNextDialogue(stage){
-    if (stage == 0){
+    if (stage <= 0){
       //-beginning stage-//
       return "Just telling you my name.";
-    } else if (stage == 1){
-      //-middle stage-//
+    } else if (stage == 1 || stage == 2 || stage == 3){
+      //-middle 3 stages: find 3 cookbooks-//
+      this.gaveRecipe = true;
       return "Alright. There you go.<br>[You learnt a new recipe!]";
     } else {
       //-end stage-//
@@ -189,6 +192,7 @@ class CelestialObject {
   constructor(coords, overallID){
     this.overallID = overallID;
     this.coords = coords;
+    this.discovered = false; // visit for the first time to make this TRUE.
     this.type = "";
     this.tradeItemsAvailable = []; //items you can buy for TRADE
     this.buyPercentage = 80 + random(40); // percentage of cargo.worth

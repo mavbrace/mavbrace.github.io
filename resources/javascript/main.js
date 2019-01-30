@@ -284,7 +284,6 @@ toggleButton.onclick = function(){
         logText_Element.innerHTML = "...";
         rightColumnTitle_Element.innerHTML = "OBSERVATIONS";
         confirmPurchaseText.innerHTML = "...";
-        updateVendorText();
         //------------//
         shipViewVisibilityOn(false);
         tradeDivVisibilityOn(true);
@@ -408,30 +407,40 @@ evilButton.onclick = function(){
 
 //--------------------------------//
 function handleCelestialBodyClicks(index, type){
+  var string = "";
 
   if (type == "planet"){
-    modalText_Element.innerHTML = "Destination: " + game.galaxy.planets[index].name;
+    string = "Destination: " + game.galaxy.planets[index].name;
+    if (!game.galaxy.planets[index].discovered){
+      string += " <u>(you haven't been here yet)</u>";
+    }
     // days == distance / velocity
     var timespan = getDistance(game.galaxy.planets[index].coords, game.ship.currentLoc) / game.ship.velocity;
     game.possibleJourney = new Journey(game.galaxy.planets[index], timespan|0); //pass in the celestialObject
 
   } else if (type == "station"){
     var station = game.galaxy.spaceStations[index];
-    modalText_Element.innerHTML = "Destination: " + station.name;
-    modalText_Element.innerHTML += " [" + station.faction.name + "]";
-    modalText_Element.innerHTML += "<br>Note: " + station.faction.getRelation();
+    string = "Destination: " + station.name + " [" + station.faction.name + "]" + "<br>Note: " + station.faction.getRelation();
+    if (!station.discovered){
+      string += " <u>(you haven't been here yet)</u>";
+    }
     var timespan = getDistance(game.galaxy.spaceStations[index].coords, game.ship.currentLoc) / game.ship.velocity;
     game.possibleJourney = new Journey(game.galaxy.spaceStations[index], timespan|0); //pass in the celestialObject
 
   } else if (type == "evil"){
     var evil = game.galaxy.evil;
-    modalText_Element.innerHTML = "Destination: " + evil.name;
+    string = "Destination: " + evil.name;
     var timespan = getDistance(game.galaxy.evil.coords, game.ship.currentLoc) / game.ship.velocity;
     game.possibleJourney = new Journey(game.galaxy.evil, timespan|0);
 
   } else {
     console.log("Error: something went wrong when clicking on celestial body.");
+    string = "...?";
   }
+
+  //--> finally, set the HTML element
+  modalText_Element.innerHTML = string;
+
 
 }
 //-----------------[ TRADE STUFF ]-----------------//
@@ -501,19 +510,19 @@ confirmPurchaseButton.onclick = function(){
 
 //display cargo!
 leftInventoryButton.onclick = function(){
-  if (game.ship.cargo.length <= 0){
-    inventoryText.innerHTML = "-- empty --";
-    return;
-  }
-  game.browseInventoryIndex = (game.browseInventoryIndex - 1).mod(game.ship.cargo.length);
-  inventoryText.innerHTML = game.ship.cargo[game.browseInventoryIndex].name;
+  updateInventoryText(-1);
 }
 rightInventoryButton.onclick = function(){
+  updateInventoryText(1);
+}
+
+//adjustor should be -1 or +1
+function updateInventoryText(adjustor){
   if (game.ship.cargo.length <= 0){
     inventoryText.innerHTML = "-- empty --";
     return;
   }
-  game.browseInventoryIndex = (game.browseInventoryIndex + 1).mod(game.ship.cargo.length);
+  game.browseInventoryIndex = (game.browseInventoryIndex + adjustor).mod(game.ship.cargo.length);
   inventoryText.innerHTML = game.ship.cargo[game.browseInventoryIndex].name;
 }
 
@@ -524,33 +533,54 @@ addToCombinerButton.onclick = function(){
   }
   combinerText.innerHTML = "";
   //pop and unshift.
-  game.ship.inCombiner.unshift(game.ship.cargo[game.browseInventoryIndex]); //add element to beginning
-  game.ship.inCombiner.pop(); //remove last element
+  game.ship.combiner.unshift(game.ship.cargo[game.browseInventoryIndex]); //add element to beginning
+  game.ship.combiner.pop(); //remove last element
+  //finally, remove from ship.cargo
+  game.ship.cargo.splice(game.browseInventoryIndex, 1);
   //===PRINT===//
+  updateCombinerText();
+  updateInventoryText(-1);
+}
+
+function updateCombinerText(){
   var first = "";
   var second = "";
-  if (game.ship.inCombiner[0] == null){
+  if (!game.ship.combiner[0]){
     first = "________";
   } else {
-    first = game.ship.inCombiner[0].name;
+    first = game.ship.combiner[0].name;
   }
-  if (game.ship.inCombiner[1] == null){
+  if (!game.ship.combiner[1]){
     second = "________";
   } else {
-    second = game.ship.inCombiner[1].name;
+    second = game.ship.combiner[1].name;
   }
   combinerText.innerHTML = first + " + " + second;
 }
 
 //----[ ATTEMPT TO COMBINE ITEMS ]----//
 cargoCombineButton.onclick = function(){
-  if (!game.ship.inCombiner[0] || !game.ship.inCombiner[1]){
+  if (!game.ship.combiner[0] || !game.ship.combiner[1]){
     combinationText.innerHTML = "Need 2 items to combine!";
   } else {
     combinationText.innerHTML = "Wow, combined!";
+    game.ship.combiner = [null, null];
+    updateCombinerText();
   }
 }
 
+//----[ EMPTY OUT COMBINER (put items back into inventory) ]----//
+cargoEmptyButton.onclick = function(){
+  if (game.ship.combiner[0] != null){
+    game.ship.cargo.push(game.ship.combiner[0]);
+  }
+  if (game.ship.combiner[1] != null){
+    game.ship.cargo.push(game.ship.combiner[1]);
+  }
+  game.ship.combiner = [null, null];
+  combinationText.innerHTML = "Fusedevice is empty.";
+  updateCombinerText();
+}
 //~~~~~~~~~~~~~~~~~~~~~~~~//
 //~~~~~~~~~~~~~~~~~~~~~~~~//
 
@@ -558,6 +588,7 @@ function updateVendorText(){
   var str = "";
   var buttonStr = "";
   var game_stage = 0;
+
   str = game.ship.whichCelestialBody.vendor.getGreetingDialogue(game.game_stage);
   buttonStr = game.ship.whichCelestialBody.vendor.getYourGreeting(game.game_stage);
 
@@ -570,10 +601,20 @@ vendorButton.onclick = function(){
   var str = "";
   str = game.ship.whichCelestialBody.vendor.getNextDialogue(game.game_stage);
   if (game.ship.whichCelestialBody.vendor.dialogueAllDone()){
-    game.game_stage++;
+    //disable button.
+    console.log("disabled");
+    vendorButton.innerHTML = ".....";
+    vendorButton.disabled = true;
   }
-  //get rid of this later:
-  game.ship.funds += 100;
+  if (game.ship.whichCelestialBody.vendor.gaveRecipe){
+    recipeTexts_full = [recipeTextA_full, recipeTextB_full, recipeTextC_full];
+    for (var i = 0; i < recipeTexts_full.length; i++){
+      if (recipeTexts_full[i].innerHTML == ""){
+        recipeTexts_full[i].innerHTML = game.galaxy.finalTech[i].getRecipe();
+        break;
+      }
+    }
+  }
   //----------//
   vendorText.innerHTML = str;
   game.updateJourneyInfoHTML();
@@ -679,11 +720,10 @@ evilInteractionButton.onclick = function(){
 recipeButton.onclick = function(){
   //update the content of the modal, anytime you open it.
   var recipeTexts = [recipeTextA, recipeTextB, recipeTextC];
-  var recipeTexts_full = [recipeTextA_full, recipeTextB_full, recipeTextC_full];
+  //note: recipeTextA,B,C_full are filled in elsewhere (as you discover them.)
   for (var i = 0; i < game.galaxy.finalTech.length; i++){
     recipeTexts[i].innerHTML = "<mark>" + game.galaxy.finalTech[i].name + "</mark>";
     recipeTexts[i].innerHTML += "<br>";
-    recipeTexts_full[i].innerHTML = game.galaxy.finalTech[i].getRecipe() + "<br>";
   }
   recipemodal.style.display = "block";
 }
