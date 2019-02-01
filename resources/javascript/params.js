@@ -39,7 +39,7 @@ var CHANCE_FOR_ENEMY_SHIP = 10; // default: 12
 var PROVISIONS_PPPD = 1; // provisions Per-Person-Per-Day
 var STARTING_FUEL_ECONOMY = 2; //x percent per day.
 var WAGES_PPPD = 1; //funds allotted Per-Person-Per-Day
-var STARTING_MONEY = 2000; // x units to start with.
+var STARTING_MONEY = 5000; // x units to start with.
 //-> first mate manages these 3 things:
 var STARTING_PROVISIONS = 100; // 100...provisions to start with.
 var STARTING_FUEL = 100; //100 percent fueled

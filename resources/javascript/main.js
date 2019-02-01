@@ -41,14 +41,14 @@ resetButton.onclick = function(){
 goButton.onclick = function(){
   if (game.view == MAIN_VIEW){
 
-    goButton.innerHTML = "PROGRESS";
+    goButton.innerHTML = "PROGRESS<br><small>one day</small>";
 
     updateControlPanelNotifs("");
     if (game.iteration == 0){
       //first click of the game.
       game.setup();
       //reveal some things.
-      goButton.innerHTML = "PROGRESS";
+      goButton.innerHTML = "PROGRESS<br><small>one day</small>";
       toggleButton.style.display = "inline";
       newDestButton.style.display = "inline";
       recipeButton.style.display = "inline";
@@ -60,10 +60,18 @@ goButton.onclick = function(){
       //===TRAVEL: animation===//
       var anim = document.getElementById("shipAnimDiv");
       anim.style.animation = "slide 2s linear infinite";
+      var isTravelling = (game.ship.currentJourney);
       if (!NO_DELAY){
-        goButton.disabled = true;
-        goButton.innerHTML = "TRAVELLING";
-        window.setTimeout(andProgress,DELAY);
+        if (!isTravelling){
+          //DRIFTING: NO ANIMATION
+          andProgress();
+        } else {
+          //TRAVELLING: USE ANIMATION
+          goButton.disabled = true;
+          goButton.innerHTML = "TRAVELLING";
+          window.setTimeout(andProgress,DELAY);
+        }
+
       } else {
         //just go there immediately (debug only)
         andProgress();
@@ -79,7 +87,7 @@ goButton.onclick = function(){
 //====after animation (travel delay)=====//
 function andProgress(){
   //--testing:animation---//
-  goButton.innerHTML = "PROGRESS"; //reset this.
+  goButton.innerHTML = "PROGRESS<br><small>one day</small>"; //reset this.
   goButton.disabled = false; //enable button once more.
   var anim = document.getElementById("shipAnimDiv");
   anim.style.animation = "slide 60s linear infinite";
@@ -284,6 +292,7 @@ toggleButton.onclick = function(){
         logText_Element.innerHTML = "...";
         rightColumnTitle_Element.innerHTML = "OBSERVATIONS";
         confirmPurchaseText.innerHTML = "...";
+        goButton.disabled = true;
         //------------//
         shipViewVisibilityOn(false);
         tradeDivVisibilityOn(true);
@@ -312,6 +321,7 @@ function shiftToMainView(message){
   toggleButton.innerHTML = "DOCK";
   strangerDesc_Element.innerHTML = "";
   rightColumnTitle_Element.innerHTML = "LOG";
+  goButton.disabled = false;
   //------------//
   shipViewVisibilityOn(true);
   tradeDivVisibilityOn(false);
@@ -453,37 +463,46 @@ leftPurchaseButton.onclick = function(){
   var numCargoForSale = game.ship.whichCelestialBody.techForSale.length;
   game.browseCargoIndex = (game.browseCargoIndex - 1).mod(numCargoForSale);
   game.possibleItemToBuy = game.ship.whichCelestialBody.techForSale[game.browseCargoIndex];
-  cargoPurchaseButton.innerHTML = game.possibleItemToBuy.name;
+  purchasableCargoText.innerHTML = game.possibleItemToBuy.name + " (" + game.possibleItemToBuy.cost + " units)";
+  confirmPurchaseText.innerHTML = "Buy the " + game.possibleItemToBuy.name + "?";
 }
+
 //--[BROWSE CARGOS FOR SALE]--//
 rightPurchaseButton.onclick = function(){
   var numCargoForSale = game.ship.whichCelestialBody.techForSale.length;
   game.browseCargoIndex = (game.browseCargoIndex + 1).mod(numCargoForSale);
   game.possibleItemToBuy = game.ship.whichCelestialBody.techForSale[game.browseCargoIndex];
-  cargoPurchaseButton.innerHTML = game.possibleItemToBuy.name;
-}
-//--a click here expresses intention to buy the cargo. (Must confirm to actually buy)
-cargoPurchaseButton.onclick = function(){
-  if (!game.possibleItemToBuy){
-    confirmPurchaseText.innerHTML = "...";
-  } else {
-    confirmPurchaseText.innerHTML = "Buy the " + game.possibleItemToBuy.name + "? Price: " + game.possibleItemToBuy.cost + " units.";
-  }
+  purchasableCargoText.innerHTML = game.possibleItemToBuy.name + " (" + game.possibleItemToBuy.cost + " units)";
+  confirmPurchaseText.innerHTML = "Buy the " + game.possibleItemToBuy.name + "?";
 }
 
 commodityAButton.onclick = function(){
-  var comm = game.ship.whichCelestialBody.commoditiesForSale[0]; //for now just the first.
-  game.possibleItemToBuy = comm;
-  confirmPurchaseText.innerHTML = "Buy bushel of " + comm.name + "? Price: " + game.possibleItemToBuy.cost + " units.";
+  var commodity = game.ship.whichCelestialBody.commoditiesForSale[0]; //for now just the first.
+  game.possibleItemToBuy = commodity;
+  confirmPurchaseText.innerHTML = "Buy bushel of " + commodity.name + "? Price: " + game.possibleItemToBuy.cost + " units.";
 }
 
 commodityBButton.onclick = function(){
-  //TODO..
+  var commodity = game.ship.whichCelestialBody.commoditiesForBuying[0]; //first for now.
+  if (game.ship.flour <= 0){
+    confirmPurchaseText.innerHTML = "You have no flour to sell.";
+  } else {
+    game.possibleItemToBuy = commodity;
+    confirmPurchaseText.innerHTML = "Sell " + game.ship.flour + " cups of flour for " + (game.possibleItemToBuy.sellingPrice * game.ship.flour) + " units?";
+  }
 }
 
 confirmPurchaseButton.onclick = function(){
   if (!game.possibleItemToBuy){
     confirmPurchaseText.innerHTML = "Please choose something to buy.";
+    return;
+  }
+  //-> check if selling flour...
+  if (game.possibleItemToBuy.name == "flour"){
+    confirmPurchaseText.innerHTML = "Sold for " + (game.possibleItemToBuy.sellingPrice * game.ship.flour) + " units!";
+    game.ship.funds += (game.possibleItemToBuy.sellingPrice * game.ship.flour);
+    game.ship.flour = 0;
+    game.updateJourneyInfoHTML(); //update bushel count / funds
     return;
   }
   //-> check if you have enough funds!
@@ -560,12 +579,28 @@ function updateCombinerText(){
 
 //----[ ATTEMPT TO COMBINE ITEMS ]----//
 cargoCombineButton.onclick = function(){
+  var checkboxes_list = [checkboxA, checkboxB, checkboxC];
   if (!game.ship.combiner[0] || !game.ship.combiner[1]){
     combinationText.innerHTML = "Need 2 items to combine!";
   } else {
-    combinationText.innerHTML = "Wow, combined!";
-    game.ship.combiner = [null, null];
-    updateCombinerText();
+    //-----TRY TO COMBINE-----//
+    var success = false;
+    for (var i = 0; i < 3; i++){
+      success = game.galaxy.finalTech[i].areTheseTheIngredients(game.ship.combiner);
+      if (success){
+        game.galaxy.finalTech[i].created = true;
+        checkboxes_list[i].src = "resources/images/checkbox_checked.png";
+        break;
+      }
+    }
+    //game.ship.combiner[0]
+    if (success){
+      combinationText.innerHTML = "Wow, combined!";
+      game.ship.combiner = [null, null];
+      updateCombinerText();
+    } else {
+      combinationText.innerHTML = "The device emitted a puff of smoke. When it cleared the parts you put in are still there, un-combined.";
+    }
   }
 }
 
@@ -722,7 +757,7 @@ recipeButton.onclick = function(){
   var recipeTexts = [recipeTextA, recipeTextB, recipeTextC];
   //note: recipeTextA,B,C_full are filled in elsewhere (as you discover them.)
   for (var i = 0; i < game.galaxy.finalTech.length; i++){
-    recipeTexts[i].innerHTML = "<mark>" + game.galaxy.finalTech[i].name + "</mark>";
+    recipeTexts[i].innerHTML = game.galaxy.finalTech[i].name;
     recipeTexts[i].innerHTML += "<br>";
   }
   recipemodal.style.display = "block";

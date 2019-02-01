@@ -1200,3 +1200,33 @@ class WonderingTask extends Task{
     return this.finalDesc;
   }
 }
+
+//======================================//
+
+class WheatTask extends Task{
+  constructor(person) {
+    super(person);
+    this.taskName = "Wheat";
+    this.howLong = 5;
+    this.initialDescription = "";
+  }
+
+  run(){
+    super.run();
+  }
+
+  taskDone() {
+    return super.taskDone();
+  }
+
+  describeFinal(){
+    // (1 bushel = 200 cups of flour)
+    var hasWheat = this.person.ship.millFlour(50); //milled wheat into 50 cups.
+    if (hasWheat){
+      return " milled some wheat into flour."
+    } else {
+      return " thought about wheat.";
+    }
+
+  }
+}

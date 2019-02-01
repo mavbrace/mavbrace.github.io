@@ -1,16 +1,16 @@
 // ---[THINGS: Cargo and Thing]---//
 
 //just names...
-var possible_cargos = [["flimmer","shun","darmerger"],
-                      ["hummer","sharlar","routerrum"],
-                      ["humdinger","thingimibob","blibbleblob"],
-                      ["rallot","sherver","nall","tello"],
-                      ["shertubble","mumbler","hortiolo"]];
+var possible_cargos = [["electromagnetic pulse generator","fusebox","tri-coil"],
+                      ["replicator","energizer","synthetic core"],
+                      ["wave infuser","resonance pin","antimatter"],
+                      ["delta emitter","coolant","dimensional sensor"],
+                      ["plasma filament","translation matrix","magnetic flux compressor"]];
 
 //just names... unused so far.
 var secondary_possible_cargos = ["sharder","glum","fiddle"];
 //just names...
-var final_tech_names = ["mucker","sharl","dubs","hams"];
+var final_tech_names = ["true resonator","flux core","assembly module","warp crystal"];
 
 
 class Cargo {
@@ -46,25 +46,39 @@ class FinalTech extends Cargo{
   getRecipe(){
     return "" + this.ingredients[0].name + " + " + this.ingredients[1].name + " + " + this.extraBit;
   }
+
+  areTheseTheIngredients(listOfIngredients){
+    //testing via names, just in case.
+    if (listOfIngredients[0].name == this.ingredients[0].name &&
+        listOfIngredients[1].name == this.ingredients[1].name){
+      return true;
+    } else if (listOfIngredients[1].name == this.ingredients[0].name &&
+              listOfIngredients[0].name == this.ingredients[1].name){
+      return true;
+    } else {
+      return false;
+    }
+  }
+
 }
 
 class Tech extends Cargo{
-  constructor(associatedID, level){
+  constructor(associatedID, level, count){
     super();
     this.level = level;
     this.associatedID = associatedID % possible_cargos.length;
     this.type = "tech";
-    this.index = random(possible_cargos[this.associatedID].length);
-    this.name = possible_cargos[this.associatedID][this.index];
+    this.name = possible_cargos[this.associatedID][count];
     this.cost = random(700) + 500; //500->1200 per item.
   }
 }
 
 class Commodity extends Cargo{
-  constructor(){
+  constructor(type){
     super();
     this.type = "commodity";
-    this.name = "wheat";
+    this.name = type; //type = wheat, or flour.
+    this.sellingPrice = random(3) + 1; //1->3 per cup
     this.cost = random(100) + 100; //100->200 per bushel.
   }
 

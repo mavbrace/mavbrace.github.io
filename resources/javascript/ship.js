@@ -47,13 +47,27 @@ class Ship {
     this.battleHistory = [];
 
     this.cargo = []; //stuff in the cargo hold.
-    this.wheat = 0; //unprocessed wheat. Bought.
-    this.flour = 0; //processed wheat. For sellling.
+    this.wheat = 0; //unprocessed wheat, bushels of. Bought.
+    this.flour = 0; //processed wheat. For sellling. Cups of.
+    this.bushelLeft = 200; //200 cups = 1 bushel.
     this.combiner = [null, null]; //combine these items. TWO ITEMS MAX.
 
     this.craftedCargoName = "";
     this.craftedCargoWorth = 0;
     this.cargoOffer = []; // [whatCargo, offer] -1 means an offer on the crafted cargo
+  }
+
+  millFlour(amount){
+    if (this.wheat <= 0){
+      return false; //no wheat to mill.
+    }
+    this.flour += amount;
+    this.bushelLeft -= amount;
+    if (this.bushelLeft <= 0){
+      this.bushelLeft = 200; //reset this.
+      this.wheat -= 1; //the bushel of wheat is all used up.
+    }
+    return true;
   }
 
   adjustWholeCrewMood(amount){
@@ -272,7 +286,7 @@ class Ship {
     if (this.provisions < 0){
       this.provisions = 0;
     }
-    //reduce fuel IF TRAVELLING. Ship consume [x]% of fuel per day.
+    //use up fuel IF TRAVELLING. Ship consume [x]% of fuel per day.
     if (this.currentJourney !== null){
       this.fuel -= this.fuelRate;
     }

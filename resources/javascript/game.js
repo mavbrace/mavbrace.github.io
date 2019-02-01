@@ -265,7 +265,7 @@ class Game {
     journeyText_Element.innerHTML += "WHEAT: " + this.ship.wheat + " bushels | ";
     journeyText_Element.innerHTML += "FLOUR: " + this.ship.flour + " cups<br>";
     journeyText_Element.innerHTML += "DAY: " + this.iteration + "<br>";
-    controlPanelText_Element.innerHTML = "DESTINATION: ";
+    controlPanelText_Element.innerHTML = "";
     if (this.ship.currentJourney != null){
       controlPanelText_Element.innerHTML += this.ship.currentJourney.destination.name;
       controlPanelText_Element.innerHTML += ", time left: " + this.ship.currentJourney.lengthInDays;
@@ -326,7 +326,7 @@ class Game {
     }
   }
 
-  //-GO, but for when you're at a station-//
+  //-GO, but for when you're at a station: only happens ONCE//
   spaceStationGo(){
     if (this.ship.whichCelestialBody == null){
       console.log("ERROR");

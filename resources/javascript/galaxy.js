@@ -197,8 +197,9 @@ class CelestialObject {
     this.tradeItemsAvailable = []; //items you can buy for TRADE
     this.buyPercentage = 80 + random(40); // percentage of cargo.worth
     this.sellPercentage = this.buyPercentage; // percentage of cargo.worth
-    this.techForSale = [new Tech(overallID,0), new Tech(overallID,0), new Tech(overallID,0)];
-    this.commoditiesForSale = [new Commodity(), new Commodity()]; //1 is available at a time.
+    this.techForSale = [new Tech(overallID,0,0), new Tech(overallID,0,1), new Tech(overallID,0,2)];
+    this.commoditiesForSale = [new Commodity("wheat"), new Commodity("wheat")]; //1 is available at a time.
+    this.commoditiesForBuying = [new Commodity("flour")];
     this.vendor = new Vendor(overallID); //vendor belonging to this station/planet.
   }
 }

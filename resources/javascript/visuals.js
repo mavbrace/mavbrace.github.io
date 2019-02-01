@@ -118,6 +118,7 @@ fem_images["clothingOutline"][3].src = "resources/images/clothingOutline_08.png"
 var either_images = { "hairColour": [[new Image(), new Image(), new Image()],
                                       [new Image(), new Image(), new Image()],
                                       [new Image(), new Image(), new Image()],
+                                      [new Image(), new Image(), new Image()],
                                       [new Image(), new Image(), new Image()]],
                       "hairOutline": [[new Image(), new Image(), new Image()]],
                       "lowerFace": [new Image(), new Image(), new Image(), new Image()],
@@ -125,7 +126,7 @@ var either_images = { "hairColour": [[new Image(), new Image(), new Image()],
                       "faceOutline": [new Image(), new Image()],
                       "clothingOutline": [new Image(), new Image(), new Image()]  };
 //--> add sources
-for (var i = 0; i < 4; i++){
+for (var i = 0; i < 5; i++){
   for (var j = 0; j < 3; j++){
     either_images["hairColour"][i][j].src = "resources/images/hairColour" +
                               hairLengths[j] + "_0" + i + ".png";
@@ -207,7 +208,7 @@ var recipeTextC_full = document.getElementById("recipeTextC_full");
 
 var leftPurchaseButton = document.querySelector('#leftPurchaseButton');
 var rightPurchaseButton = document.querySelector('#rightPurchaseButton');
-var cargoPurchaseButton = document.querySelector('#purchaseCargoButton');
+var purchasableCargoText = document.querySelector('#purchasableCargoText');
 
 var commodityAButton = document.querySelector('#commodityAButton');//buy
 var commodityBButton = document.querySelector('#commodityBButton');//sell
@@ -227,6 +228,9 @@ var combinerText = document.querySelector('#combinerText');
 var combinationMessage = document.querySelector('#combinationText');
 var cargoCombineButton = document.querySelector('#cargoCombineButton');
 var cargoEmptyButton = document.querySelector('#cargoEmptyButton');
+var checkboxA = document.querySelector('#checkboxA');
+var checkboxB = document.querySelector('#checkboxB');
+var checkboxC = document.querySelector('#checkboxC');
 //------------------------//
 
 //--> hide or reveal SHIP INFO VIEW div

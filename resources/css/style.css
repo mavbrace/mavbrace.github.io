@@ -217,7 +217,7 @@ input {
 }
 
 #commodityDivA {
-  padding: 5px;
+  padding: 10px;
   display: inline-block;
   margin: 0px;
   background-color: rgb(60, 60, 60);
@@ -225,7 +225,7 @@ input {
 }
 
 #commodityDivB {
-  padding: 5px;
+  padding: 10px;
   display: inline-block;
   margin-bottom:10px;
   background-color: rgb(60, 60, 60);
@@ -233,7 +233,7 @@ input {
 }
 
 #purchasableItemsDiv {
-  height: 50px;
+  height: 100px;
   position: relative;
   width:100%;
   text-align: center;
@@ -244,25 +244,31 @@ input {
 #leftPurchaseButton {
   left: 0;
   position: absolute;
-  top: 20%;
-  padding: 5px;
+  top: 35px;
+  padding: 7px;
+  height: 30px;
+  border-radius: 3px;
 }
 
-#purchaseCargoButton {
+#purchasableCargoText {
   width: 60%;
+  height: 60px;
   display: block;
   margin-left: 20%;
   position: absolute;
   top: 20%;
   padding: 5px;
   text-transform: uppercase;
+  border-radius: 10px;
 }
 
 #rightPurchaseButton {
   right: 0;
   position: absolute;
-  top: 20%;
-  padding: 5px;
+  top: 35px;
+  padding: 7px;
+  height: 30px;
+  border-radius: 3px;
 }
 
 
@@ -401,7 +407,7 @@ input {
   position: absolute;
   bottom: 0;
   width: 100%;
-  height: 175px;
+  height: 190px;
   background-color: black;
   border: 6px solid white;
   border-top-right-radius: 15px;
@@ -409,18 +415,41 @@ input {
   text-align: center;
 }
 
+#recipeButton{
+  float:left;
+  display:block;
+  position: relative;
+  border-radius:3px;
+  width: 30%;
+}
+
+#newDestButton{
+  float:right;
+  border-radius:3px;
+  width: 30%;
+}
+
 #goButton {
+  font-size: 1.3em;
+  line-height: 1;
   margin-left: auto;
   margin-right: auto;
-  display: block;
-  padding: 5px;
+  display: inline-block;
+  margin-top: 10px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-radius:5px;
   margin-bottom: 5px;
 }
+
 #toggleButton {
+  border-radius:3px;
 }
-#newDestButton{
-}
-#recipeButton{
+
+#goButton:active {
+  background-color: rgb(100,70,70);
 }
 
 .logcolumn {
@@ -568,10 +597,17 @@ input {
   height: 5px;
 }
 
-mark {
-  text-transform: uppercase;
-  background-color: yellow;
-  color: black;
+.finalTechNames {
+  vertical-align: middle;
+  display: inline-block;
+  text-transform: capitalize;
+  font-size: 1.4em;
+  line-height:1.2;
+  margin-left:10px;
+}
+
+.checkboxes {
+  vertical-align: middle;
 }
 
 /*============================================*/

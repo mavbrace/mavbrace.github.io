@@ -81,7 +81,8 @@ class Person{
                           "Death": 100,
                           "Wondering": 1,
                           "Game": 1,
-                          "Argument": 1 };
+                          "Argument": 1,
+                          "Wheat": 1  };
     //-> visuals
     this.visualFeatures = {"hairColour":null,
                           "skin":null,
@@ -523,7 +524,8 @@ class Person{
     // 13 = DeathTask
     // 14 = WonderingTask
     // 15 = GameTask
-    // 15 = ArgumentTask
+    // 16 = ArgumentTask
+    // 17 = WheatTask
     //==================================//
     this.possibleTasks = []; //list of task 'IDs'; empty and refill here...
     //-> probability list that will be generated (and picked from):
@@ -611,6 +613,9 @@ class Person{
       this.possibleTasks.push(16);
       probabilities.push(this.task_chances["Argument"]);
     }
+    //17. WheatTask
+    this.possibleTasks.push(17);
+    probabilities.push(this.task_chances["Wheat"]);
 
     //------------------//
     // PICK A TASK //
@@ -638,6 +643,7 @@ class Person{
     }
     //===========================================================//
     var smallTask = ""; //something that doesn't require a full task.
+
 
     if (chosenTaskID == 0) {
       newTask = new DoNothingTask(this);
@@ -699,6 +705,8 @@ class Person{
         //have an argument.
         new ArgumentTask(this, conversation_partner, true);
       }
+    } else if (chosenTaskID == 17){
+      newTask = new WheatTask(this);
     } else {
       console.log("Error: no tasks chosen.");
     }

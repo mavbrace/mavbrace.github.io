@@ -47,11 +47,11 @@
             </div>
             <div id="commodityDivB">
               <p id="commodityBText" style="margin:0px; padding-bottom:5px;"> commodity </p>
-              <button id="commodityBButton"> SELL 10 </button>
+              <button id="commodityBButton"> SELL </button>
             </div>
             <div id="purchasableItemsDiv">
               <button id="leftPurchaseButton"> < </button>
-              <button id="purchaseCargoButton"> BUY 1 </button>
+              <p id="purchasableCargoText"> -welcome- </p>
               <button id="rightPurchaseButton"> > </button>
             </div>
             <p id = "confirmPurchaseText"> </p>
@@ -104,12 +104,12 @@
 
           </div>
           <div id = "controlPanel" class = "controlPanelDiv">
-            <p id="controlPanelText">DESTINATION: no destination set</p>
-            <button id="goButton">PROGRESS</button>
-            <p id = "controlPanelNotifs"> >>press progress to begin </p>
-            <button id="toggleButton">DOCK</button>
             <button id="newDestButton">MAP</button>
             <button id="recipeButton">TECH</button>
+            <button id="goButton"> PROGRESS </button>
+            <button id="toggleButton">DOCK</button>
+            <p id="controlPanelText" style="text-transform: capitalize;">no destination set</p>
+            <p id = "controlPanelNotifs"> >>press progress to begin </p>
           </div>
         </div>
 
@@ -171,12 +171,15 @@
         <p> TECHNOLOGY </p>
       </div>
       <div style="background-color:rgb(30,32,40); padding:10px; margin:50px;">
-        <p style="line-height:1.2;margin-left:10px;" id="recipeTextA"> ... </p>
-        <p style="line-height:1.2;margin-left:30px;" id="recipeTextA_full"> ... </p>
-        <p style="line-height:1.2;margin-left:10px;" id="recipeTextB"> ... </p>
-        <p style="line-height:1.2;margin-left:30px;" id="recipeTextB_full"> ... </p>
-        <p style="line-height:1.2;margin-left:10px;" id="recipeTextC"> ... </p>
-        <p style="line-height:1.2;margin-left:30px;" id="recipeTextC_full"> ... </p>
+        <img src="resources/images/checkbox_unchecked.png" id="checkboxA" class="checkboxes">
+        <p id="recipeTextA" class="finalTechNames"> ... </p>
+        <p style="line-height:1.2;margin-left:30px;" id="recipeTextA_full"> -no recipe found- </p>
+        <img src="resources/images/checkbox_unchecked.png" id="checkboxB" class="checkboxes">
+        <p id="recipeTextB" class="finalTechNames"> ... </p>
+        <p style="line-height:1.2;margin-left:30px;" id="recipeTextB_full"> -no recipe found- </p>
+        <img src="resources/images/checkbox_unchecked.png" id="checkboxC" class="checkboxes">
+        <p id="recipeTextC" class="finalTechNames"> ... </p>
+        <p style="line-height:1.2;margin-left:30px;" id="recipeTextC_full"> -no recipe found- </p>
       </div>
     </div>
 
